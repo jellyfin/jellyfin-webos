@@ -1,0 +1,15 @@
+{
+    "vendor": "Jellyfin Project",
+    "largeIcon": "assets/icon-transparent130.png",
+    "icon": "assets/icon-transparent80.png",
+    "iconColor": "#000b25",
+    "main": "index.html",
+    "bgImage": "assets/splash.png",
+    "bgColor": "#000b25",
+    "splashBackground": "assets/splash.png",
+    "id": "org.jellyfin.webos",
+    "title": "Jellyfin",
+    "type": "web",
+    "version": "0.0.1",
+    "appDescription": "A webOS client to connect to a Jellyfin Server instance and stream media."
+}
