@@ -80,10 +80,10 @@ input[type=text]:focus, textarea:focus {
 	
 	function isVisible(element){
 		return element.offsetWidth > 0 && element.offsetHeight > 0;
-	}
+	}	
 	
-	function navigateUp(){
-		console.log("Navigating up...")
+	function navigate(amount){
+		console.log("Navigating "+amount.toString()+"...")
 		var element = document.activeElement;
 		if(element === null){
 			navigationInit();
@@ -97,45 +97,21 @@ input[type=text]:focus, textarea:focus {
 	        const allElements = document.querySelectorAll('input, button, a, area, object, select, textarea, [contenteditable]');
 
 	        //Find the current tab index.
-	        const currentIndex = Array.from(allElements).findIndex(el => currentNode.isEqualNode(el))
+	        const currentIndex = Array.from(allElements).findIndex(function (el) { return currentNode.isEqualNode(el); })
 
 	        //focus the following element
-	        if(allElements[currentIndex - 1])
-	        	allElements[currentIndex - 1].focus();
-		}
-		
-	}
-	
-	function navigateDown(){
-		console.log("Navigating down...")
-		var element = document.activeElement;
-		if(element === null){
-			navigationInit();
-		} else if(!isVisible(element) || element.tagName=='BODY'){
-			navigationInit();
-		} else {
-			//Isolate the node that we're after
-	        const currentNode = element;
-
-	        //find all tab-able elements
-	        const allElements = document.querySelectorAll('input, button, a, area, object, select, textarea, [contenteditable]');
-
-	        //Find the current tab index.
-	        const currentIndex = Array.from(allElements).findIndex(el => currentNode.isEqualNode(el))
-
-	        //focus the following element
-	        if(allElements[currentIndex + 1])
-	       		allElements[currentIndex + 1].focus();
+	        if(allElements[currentIndex + amount])
+	       		allElements[currentIndex + amount].focus();
 		}
 	}
 	
 
 	function upArrowPressed() {
-		navigateUp();
+		navigate(-1);
 	}
 
 	function downArrowPressed() {
-		navigateDown();
+		navigate(1);
 	}
 	function leftArrowPressed() {
 	   // Your stuff here
