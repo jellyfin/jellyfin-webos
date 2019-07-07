@@ -151,9 +151,16 @@ input[type=text]:focus, textarea:focus {
 	    }
 	};
 	
-	function handleCheckbox(elem){
+	function handleCheckbox(elem, evt){
 		console.log(elem);
-		elem.checked = !elem.checked;
+		if(evt===true){
+			elem.checked = !elem.checked; //click event
+		} else {
+			evt = evt || window.event; //keydown event
+		    if(evt.keyCode == 13 || evt.keyCode == 32) { //OK button or Space
+		    	elem.checked = !elem.checked;
+		    }	
+		}
 		return false;
 	}
 
@@ -353,7 +360,7 @@ input[type=text]:focus, textarea:focus {
 			<input type="text" id="hostname" name="hostname" placeholder="jellfin.local" tabindex="0"/><br>
 			<input type="text" id="port" name="port" placeholder="8096" tabindex="1"/><br>
 			<input type="text" id="schema" name="schema" placeholder="https" tabindex="2"/><br>
-			<input type="checkbox" id="auto_connect" name="auto_connect" onclick="return handleCheckbox(this);" tabindex="3" value="1"/>
+			<input type="checkbox" id="auto_connect" name="auto_connect" onclick="return handleCheckbox(this, true);" onkeydown="return handleCheckbox(this, event);" tabindex="3" value="1"/>
 			<label for="auto_connect">Automatically connect on app launch.</label><br>
 			<button id="connect" type="button" onclick="return handleServerSelect();" tabindex="4">Connect</button>
 			</form>
