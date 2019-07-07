@@ -49,8 +49,12 @@ input, textarea, button{
   margin: 5px 1px 3px 1px;  
   border-radius: 1em;
 }
+input[type=checkbox] {
+	width: 1em;
+	height: 1em;
+}
 
-input[type=text], textarea {
+input[type=text], input[type=checkbox], textarea {
   border: 2px solid #DDDDDD;
 }
 
@@ -62,10 +66,18 @@ button {
 button:focus {
   background: rgba(81, 203, 238, 1);
 }
+
+input[type=checkbox]:focus + label { 
+	color: rgba(81, 203, 238, 1);
+}
+
+input[type=checkbox]:focus { 
+	
+  box-shadow: 0 0 10px rgba(81, 203, 238, 1);
+  border: 4px solid rgba(81, 203, 238, 1);
+}
  
 input[type=text]:focus, textarea:focus {
-  box-shadow: 0 0 5px rgba(81, 203, 238, 1);
-  border: 2px solid rgba(81, 203, 238, 1);
 }
 
 </style>
@@ -138,10 +150,16 @@ input[type=text]:focus, textarea:focus {
 	            break;
 	    }
 	};
+	
+	function handleCheckbox(elem){
+		console.log(elem);
+		elem.checked = !elem.checked;
+		return false;
+	}
 
 	function navigationInit() {
-		if(isVisible(document.querySelector('#hostname'))){
-			document.querySelector('#hostname').focus()
+		if(isVisible(document.querySelector('#connect'))){
+			document.querySelector('#connect').focus()
 		} else if(isVisible(document.querySelector('#abort'))){
 			document.querySelector('#abort').focus()		
 		}
@@ -150,18 +168,26 @@ input[type=text]:focus, textarea:focus {
 	function Init(){
 		navigationInit();
 		if(storage.exists('connected_server')){
-			console.log("Auto connecting...")
 			data = storage.get('connected_server')
 			document.querySelector('#hostname').value = data.hostname
 			document.querySelector('#port').value = data.port
 			document.querySelector('#schema').value = data.schema
-			handleServerSelect()
+			document.querySelector('#auto_connect').checked = data.auto_connect
+			if (window.performance && window.performance.navigation.type == window.performance.navigation.TYPE_BACK_FORWARD) {
+				console.log('Got here using the browser "Back" or "Forward" button, inhibiting auto connect.');
+			} else {
+				if (data.auto_connect){
+					console.log("Auto connecting...")
+					handleServerSelect()
+				}
+			}
 		}
 	}
     function handleServerSelect(){
     	var schema = document.querySelector('#schema').value;
     	var hostname = document.querySelector('#hostname').value;
     	var port = parseInt(document.querySelector('#port').value);
+    	var auto_connect = document.querySelector('#auto_connect').checked;
     	
     	if (schema == '') {
     		schema = 'https';
@@ -186,14 +212,14 @@ input[type=text]:focus, textarea:focus {
     		}
     	}
     	displayConnecting();
-    	console.log(schema, hostname, port);
+    	console.log(schema, hostname, port, auto_connect);
     	
     	if(curr_req){    		
     		console.log("There is an active request.");
     		abort();
     	}
     	hideError();
-    	getServerInfo(schema, hostname, port);
+    	getServerInfo(schema, hostname, port, auto_connect);
     }
     
     function displayError(error){
@@ -217,14 +243,14 @@ input[type=text]:focus, textarea:focus {
     	document.querySelector('#busy').style.display = 'none';
     	navigationInit();
     }
-	function getServerInfo(schema, hostname, port){
+	function getServerInfo(schema, hostname, port, auto_connect){
 				
 		baseurl = schema+'://'+hostname+':'+port;
 		
 		curr_req = ajax.request(baseurl + "/System/Info/Public" , {
 			method: "GET",
 			success: function(data) {
-				handleSuccessServerInfo(data, baseurl, schema, hostname, port);
+				handleSuccessServerInfo(data, baseurl, schema, hostname, port, auto_connect);
 			},
 			error: handleFailure,
 			abort: handleAbort,
@@ -244,7 +270,7 @@ input[type=text]:focus, textarea:focus {
 		});
 	}
 	
-	function handleSuccessServerInfo(data, baseurl, schema, hostname, port){	
+	function handleSuccessServerInfo(data, baseurl, schema, hostname, port, auto_connect){	
 		curr_req = false;
 		if(storage.exists('connected_server')){
 			info = storage.get('connected_server')
@@ -253,13 +279,13 @@ input[type=text]:focus, textarea:focus {
 					//server has changed warn user.
 					hideConnecting();
 					displayError("The server ID has changed since the last connection, please check if you are reaching your own server. To connect anyway, click connect again.");
-					storage.set('connected_server', {'hostname':hostname, 'port':port, 'schema':schema, 'id': false} )
+					storage.set('connected_server', {'hostname':hostname, 'port':port, 'schema':schema, 'auto_connect': false, 'id': false} )
 					return false
 				}
 			}
 		}
 		
-		storage.set('connected_server', {'hostname':hostname, 'port':port, 'schema':schema, 'id': data.Id} )
+		storage.set('connected_server', {'hostname':hostname, 'port':port, 'schema':schema, 'auto_connect': auto_connect, 'id': data.Id} )
 		
 		getManifest(baseurl)
 	}
@@ -323,11 +349,13 @@ input[type=text]:focus, textarea:focus {
 		</div>
 		<div id="serverInfoForm">				
 			<p style="display:none; color: red; font-weight: bold; text-align: center;" id="error">&nbsp;</p>
-			<form onsubmit="handleServerSelect(); return false;">
+			<form>
 			<input type="text" id="hostname" name="hostname" placeholder="jellfin.local" tabindex="0"/><br>
 			<input type="text" id="port" name="port" placeholder="8096" tabindex="1"/><br>
 			<input type="text" id="schema" name="schema" placeholder="https" tabindex="2"/><br>
-			<button type="submit" tabindex="3">Connect</button>
+			<input type="checkbox" id="auto_connect" name="auto_connect" onclick="return handleCheckbox(this);" tabindex="3" value="1"/>
+			<label for="auto_connect">Automatically connect on app launch.</label><br>
+			<button id="connect" type="button" onclick="return handleServerSelect();" tabindex="4">Connect</button>
 			</form>
 		</div>
 		<div id="busy" style="display:none;">
