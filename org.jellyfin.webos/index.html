@@ -1,368 +1,377 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>Jellyfin for webOS</title>
-<style type="text/css">
-body {
-		width: 100%;
-		height: 100%;
-		font-size: 36px;
-		font-family: -apple-system, "Helvetica", system-ui, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen-Sans", "Ubuntu", "Cantarell", "Helvetica Neue", "Open Sans", sans-serif;
-		background-color: #000b25;
-		color: white;
-}
+	<title>Jellyfin for webOS</title>
+	<style type="text/css">
+		body {
+			width: 100%;
+			height: 100%;
+			font-size: 36px;
+			font-family: -apple-system, "Helvetica", system-ui, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen-Sans", "Ubuntu", "Cantarell", "Helvetica Neue", "Open Sans", sans-serif;
+			background-color: #000b25;
+			color: white;
+		}
 
-.container {
-	    position:absolute;
-		height:100%;
-		width:100%;		
-		vertical-align: middle;
-		text-align:center;
-		color: #FFFFFF;
-		display: flex;
-		flex-direction: column;
-		flex-wrap: flex-direction;
-		justify-content: center;
-		align-items: center;
-		align-content: center;
-}
+		.container {
+			position: absolute;
+			height: 100%;
+			width: 100%;
+			vertical-align: middle;
+			text-align: center;
+			color: #FFFFFF;
+			display: flex;
+			flex-direction: column;
+			flex-wrap: flex-direction;
+			justify-content: center;
+			align-items: center;
+			align-content: center;
+		}
 
-.container div {
-	    display: inline-block;
-		max-width: 60%;
-}
+		.container div {
+			display: inline-block;
+			max-width: 60%;
+		}
 
-#logo {
-	width: 60%;
-}
+		#logo {
+			width: 60%;
+		}
 
-#logo img {
-	width: 60%;
-}
+		#logo img {
+			width: 60%;
+		}
 
-input, textarea, button{
-	font-size: 1em;
-  -webkit-transition: all 0.30s ease-in-out;
-  transition: all 0.30s ease-in-out;
-  outline: none;
-  padding: 5px 20px 5px 20px;
-  margin: 5px 1px 3px 1px;  
-  border-radius: 1em;
-}
-input[type=checkbox] {
-	width: 1em;
-	height: 1em;
-}
+		input,
+		textarea,
+		button {
+			font-size: 1em;
+			-webkit-transition: all 0.30s ease-in-out;
+			transition: all 0.30s ease-in-out;
+			outline: none;
+			padding: 5px 20px 5px 20px;
+			margin: 5px 1px 3px 1px;
+			border-radius: 1em;
+		}
 
-input[type=text], input[type=checkbox], textarea {
-  border: 2px solid #DDDDDD;
-}
+		input[type=checkbox] {
+			width: 1em;
+			height: 1em;
+		}
 
-button {	
-  background: #DDDDDD;
-  border:0;
-}
+		input[type=text],
+		input[type=checkbox],
+		textarea {
+			border: 2px solid #DDDDDD;
+		}
 
-button:focus {
-  background: rgba(81, 203, 238, 1);
-}
+		button {
+			background: #DDDDDD;
+			border: 0;
+		}
 
-input[type=checkbox]:focus + label { 
-	color: rgba(81, 203, 238, 1);
-}
+		button:focus {
+			background: rgba(81, 203, 238, 1);
+		}
 
-input[type=checkbox]:focus { 
-	
-  box-shadow: 0 0 10px rgba(81, 203, 238, 1);
-  border: 4px solid rgba(81, 203, 238, 1);
-}
- 
-input[type=text]:focus, textarea:focus {
-}
+		input[type=checkbox]:focus+label {
+			color: rgba(81, 203, 238, 1);
+		}
 
-</style>
+		input[type=checkbox]:focus {
+
+			box-shadow: 0 0 10px rgba(81, 203, 238, 1);
+			border: 4px solid rgba(81, 203, 238, 1);
+		}
+
+		input[type=text]:focus,
+		textarea:focus {}
+	</style>
 	<script src="webOSTVjs-1.1.0/webOSTV.js" charset="utf-8"></script>
 	<script src="webOSTVjs-1.1.0/webOSTV-dev.js" charset="utf-8"></script>
 	<script src="js/ajax.js" charset="utf-8"></script>
 	<script src="js/storage.js" charset="utf-8"></script>
 	<script>
-	var curr_req = false;
-	var server_info = false;
-	var manifest = false;
-	
-	function isVisible(element){
-		return element.offsetWidth > 0 && element.offsetHeight > 0;
-	}	
-	
-	function navigate(amount){
-		console.log("Navigating "+amount.toString()+"...")
-		var element = document.activeElement;
-		if(element === null){
-			navigationInit();
-		} else if(!isVisible(element) || element.tagName=='BODY'){
-			navigationInit();
-		} else {
-			//Isolate the node that we're after
-	        const currentNode = element;
+		var curr_req = false;
+		var server_info = false;
+		var manifest = false;
 
-	        //find all tab-able elements
-	        const allElements = document.querySelectorAll('input, button, a, area, object, select, textarea, [contenteditable]');
-
-	        //Find the current tab index.
-	        const currentIndex = Array.from(allElements).findIndex(function (el) { return currentNode.isEqualNode(el); })
-
-	        //focus the following element
-	        if(allElements[currentIndex + amount])
-	       		allElements[currentIndex + amount].focus();
+		function isVisible(element) {
+			return element.offsetWidth > 0 && element.offsetHeight > 0;
 		}
-	}
-	
 
-	function upArrowPressed() {
-		navigate(-1);
-	}
-
-	function downArrowPressed() {
-		navigate(1);
-	}
-	function leftArrowPressed() {
-	   // Your stuff here
-	}
-
-	function rightArrowPressed() {
-	   // Your stuff here
-	}
-
-	document.onkeydown = function(evt) {
-	    evt = evt || window.event;
-	    switch (evt.keyCode) {
-	        case 37:
-	            leftArrowPressed();
-	            break;
-	        case 39:
-	            rightArrowPressed();
-	            break;	            
-	        case 38:
-	            upArrowPressed();
-	            break;	            
-	        case 40:
-	            downArrowPressed();
-	            break;
-	    }
-	};
-	
-	function handleCheckbox(elem, evt){
-		console.log(elem);
-		if(evt===true){
-			elem.checked = !elem.checked; //click event
-		} else {
-			evt = evt || window.event; //keydown event
-		    if(evt.keyCode == 13 || evt.keyCode == 32) { //OK button or Space
-		    	elem.checked = !elem.checked;
-		    }	
-		}
-		return false;
-	}
-
-	function navigationInit() {
-		if(isVisible(document.querySelector('#connect'))){
-			document.querySelector('#connect').focus()
-		} else if(isVisible(document.querySelector('#abort'))){
-			document.querySelector('#abort').focus()		
-		}
-	}
-	
-	function Init(){
-		navigationInit();
-		if(storage.exists('connected_server')){
-			data = storage.get('connected_server')
-			document.querySelector('#hostname').value = data.hostname
-			document.querySelector('#port').value = data.port
-			document.querySelector('#schema').value = data.schema
-			document.querySelector('#auto_connect').checked = data.auto_connect
-			if (window.performance && window.performance.navigation.type == window.performance.navigation.TYPE_BACK_FORWARD) {
-				console.log('Got here using the browser "Back" or "Forward" button, inhibiting auto connect.');
+		function navigate(amount) {
+			console.log("Navigating " + amount.toString() + "...")
+			var element = document.activeElement;
+			if (element === null) {
+				navigationInit();
+			} else if (!isVisible(element) || element.tagName == 'BODY') {
+				navigationInit();
 			} else {
-				if (data.auto_connect){
-					console.log("Auto connecting...")
-					handleServerSelect()
+				//Isolate the node that we're after
+				const currentNode = element;
+
+				//find all tab-able elements
+				const allElements = document.querySelectorAll('input, button, a, area, object, select, textarea, [contenteditable]');
+
+				//Find the current tab index.
+				const currentIndex = Array.from(allElements).findIndex(function (el) { return currentNode.isEqualNode(el); })
+
+				//focus the following element
+				if (allElements[currentIndex + amount])
+					allElements[currentIndex + amount].focus();
+			}
+		}
+
+
+		function upArrowPressed() {
+			navigate(-1);
+		}
+
+		function downArrowPressed() {
+			navigate(1);
+		}
+		function leftArrowPressed() {
+			// Your stuff here
+		}
+
+		function rightArrowPressed() {
+			// Your stuff here
+		}
+
+		document.onkeydown = function (evt) {
+			evt = evt || window.event;
+			switch (evt.keyCode) {
+				case 37:
+					leftArrowPressed();
+					break;
+				case 39:
+					rightArrowPressed();
+					break;
+				case 38:
+					upArrowPressed();
+					break;
+				case 40:
+					downArrowPressed();
+					break;
+			}
+		};
+
+		function handleCheckbox(elem, evt) {
+			console.log(elem);
+			if (evt === true) {
+				elem.checked = !elem.checked; //click event
+			} else {
+				evt = evt || window.event; //keydown event
+				if (evt.keyCode == 13 || evt.keyCode == 32) { //OK button or Space
+					elem.checked = !elem.checked;
+				}
+			}
+			return false;
+		}
+
+		function navigationInit() {
+			if (isVisible(document.querySelector('#connect'))) {
+				document.querySelector('#connect').focus()
+			} else if (isVisible(document.querySelector('#abort'))) {
+				document.querySelector('#abort').focus()
+			}
+		}
+
+		function Init() {
+			navigationInit();
+			if (storage.exists('connected_server')) {
+				data = storage.get('connected_server')
+				document.querySelector('#hostname').value = data.hostname
+				document.querySelector('#port').value = data.port
+				document.querySelector('#schema').value = data.schema
+				document.querySelector('#auto_connect').checked = data.auto_connect
+				if (window.performance && window.performance.navigation.type == window.performance.navigation.TYPE_BACK_FORWARD) {
+					console.log('Got here using the browser "Back" or "Forward" button, inhibiting auto connect.');
+				} else {
+					if (data.auto_connect) {
+						console.log("Auto connecting...")
+						handleServerSelect()
+					}
 				}
 			}
 		}
-	}
-    function handleServerSelect(){
-    	var schema = document.querySelector('#schema').value;
-    	var hostname = document.querySelector('#hostname').value;
-    	var port = parseInt(document.querySelector('#port').value);
-    	var auto_connect = document.querySelector('#auto_connect').checked;
-    	
-    	if (schema == '') {
-    		schema = 'https';
-    	} else if(schema != 'http' && schema != 'https') {
-    		//TODO throw error
-    		schema = 'http';
-    	}
-    	
-    	//TODO verify hostname
-    	if(hostname == ''){
-    		hostname = 'jellyfin.local'
-    	}
-    	
-    	if (isNaN(port) || port === 0) {
-    		if (schema=='http'){
-    			port = 8096;
-    		} else if (schema=='https') {
-    			port = 8920;
-    		} else {
-    			//TODO throw error
-        		port = 8920;
-    		}
-    	}
-    	displayConnecting();
-    	console.log(schema, hostname, port, auto_connect);
-    	
-    	if(curr_req){    		
-    		console.log("There is an active request.");
-    		abort();
-    	}
-    	hideError();
-    	getServerInfo(schema, hostname, port, auto_connect);
-    }
-    
-    function displayError(error){
-    	var errorElem = document.querySelector('#error')
-    	errorElem.style.display = '';
-    	errorElem.innerHTML = error;
-    }
-    function hideError(){
-    	var errorElem = document.querySelector('#error')
-    	errorElem.style.display = 'none';
-    	errorElem.innerHTML = '&nbsp;';
-    }
-    
-    function displayConnecting(){
-    	document.querySelector('#serverInfoForm').style.display = 'none';
-    	document.querySelector('#busy').style.display = '';
-    	navigationInit();
-    }
-    function hideConnecting(){
-    	document.querySelector('#serverInfoForm').style.display = '';
-    	document.querySelector('#busy').style.display = 'none';
-    	navigationInit();
-    }
-	function getServerInfo(schema, hostname, port, auto_connect){
-				
-		baseurl = schema+'://'+hostname+':'+port;
-		
-		curr_req = ajax.request(baseurl + "/System/Info/Public" , {
-			method: "GET",
-			success: function(data) {
-				handleSuccessServerInfo(data, baseurl, schema, hostname, port, auto_connect);
-			},
-			error: handleFailure,
-			abort: handleAbort,
-			timeout: 5000
-		});
-	}
-	
-	function getManifest(baseurl){		
-		curr_req = ajax.request(baseurl + "/web/manifest.json" , {
-			method: "GET",
-			success: function(data) {
-				handleSuccessManifest(data, baseurl);
-			},
-			error: handleFailure,
-			abort: handleAbort,
-			timeout: 5000
-		});
-	}
-	
-	function handleSuccessServerInfo(data, baseurl, schema, hostname, port, auto_connect){	
-		curr_req = false;
-		if(storage.exists('connected_server')){
+		function handleServerSelect() {
+			var schema = document.querySelector('#schema').value;
+			var hostname = document.querySelector('#hostname').value;
+			var port = parseInt(document.querySelector('#port').value);
+			var auto_connect = document.querySelector('#auto_connect').checked;
+
+			if (schema == '') {
+				schema = 'https';
+			} else if (schema != 'http' && schema != 'https') {
+				//TODO throw error
+				schema = 'http';
+			}
+
+			//TODO verify hostname
+			if (hostname == '') {
+				hostname = 'jellyfin.local'
+			}
+
+			if (isNaN(port) || port === 0) {
+				if (schema == 'http') {
+					port = 8096;
+				} else if (schema == 'https') {
+					port = 8920;
+				} else {
+					//TODO throw error
+					port = 8920;
+				}
+			}
+			displayConnecting();
+			console.log(schema, hostname, port, auto_connect);
+
+			if (curr_req) {
+				console.log("There is an active request.");
+				abort();
+			}
+			hideError();
+			getServerInfo(schema, hostname, port, auto_connect);
+		}
+
+		function displayError(error) {
+			var errorElem = document.querySelector('#error')
+			errorElem.style.display = '';
+			errorElem.innerHTML = error;
+		}
+		function hideError() {
+			var errorElem = document.querySelector('#error')
+			errorElem.style.display = 'none';
+			errorElem.innerHTML = '&nbsp;';
+		}
+
+		function displayConnecting() {
+			document.querySelector('#serverInfoForm').style.display = 'none';
+			document.querySelector('#busy').style.display = '';
+			navigationInit();
+		}
+		function hideConnecting() {
+			document.querySelector('#serverInfoForm').style.display = '';
+			document.querySelector('#busy').style.display = 'none';
+			navigationInit();
+		}
+		function getServerInfo(schema, hostname, port, auto_connect) {
+
+			baseurl = schema + '://' + hostname + ':' + port;
+
+			curr_req = ajax.request(baseurl + "/System/Info/Public", {
+				method: "GET",
+				success: function (data) {
+					handleSuccessServerInfo(data, baseurl, schema, hostname, port, auto_connect);
+				},
+				error: handleFailure,
+				abort: handleAbort,
+				timeout: 5000
+			});
+		}
+
+		function getManifest(baseurl) {
+			curr_req = ajax.request(baseurl + "/web/manifest.json", {
+				method: "GET",
+				success: function (data) {
+					handleSuccessManifest(data, baseurl);
+				},
+				error: handleFailure,
+				abort: handleAbort,
+				timeout: 5000
+			});
+		}
+
+		function handleSuccessServerInfo(data, baseurl, schema, hostname, port, auto_connect) {
+			curr_req = false;
+			if (storage.exists('connected_server')) {
+				info = storage.get('connected_server')
+				if (info.hostname == hostname && info.port == port) {
+					if (info.id != data.Id && info.id !== false) {
+						//server has changed warn user.
+						hideConnecting();
+						displayError("The server ID has changed since the last connection, please check if you are reaching your own server. To connect anyway, click connect again.");
+						storage.set('connected_server', { 'hostname': hostname, 'port': port, 'schema': schema, 'auto_connect': false, 'id': false })
+						return false
+					}
+				}
+			}
+
+			storage.set('connected_server', { 'hostname': hostname, 'port': port, 'schema': schema, 'auto_connect': auto_connect, 'id': data.Id })
+
+			getManifest(baseurl)
+		}
+
+		function handleSuccessManifest(data, baseurl, schema, hostname, port) {
+			var hosturl = baseurl + "/web/" + data.start_url;
+			curr_req = false;
+
 			info = storage.get('connected_server')
-			if(info.hostname==hostname && info.port==port){
-				if(info.id!=data.Id && info.id!==false){
-					//server has changed warn user.
-					hideConnecting();
-					displayError("The server ID has changed since the last connection, please check if you are reaching your own server. To connect anyway, click connect again.");
-					storage.set('connected_server', {'hostname':hostname, 'port':port, 'schema':schema, 'auto_connect': false, 'id': false} )
-					return false
-				}
-			}
+			info['hosturl'] = hosturl
+			info['baseurl'] = baseurl
+			storage.set('connected_server', info)
+			console.log(hosturl);
+			console.log(info);
+			handoff(hosturl)
 		}
-		
-		storage.set('connected_server', {'hostname':hostname, 'port':port, 'schema':schema, 'auto_connect': auto_connect, 'id': data.Id} )
-		
-		getManifest(baseurl)
-	}
-	
-	function handleSuccessManifest(data, baseurl, schema, hostname, port){		
-		var hosturl = baseurl+data.start_url;
-		curr_req = false;
-		
-		info = storage.get('connected_server')
-		info['hosturl'] = hosturl
-		info['baseurl'] = baseurl
-		storage.set('connected_server', info)
-		console.log(hosturl);
-		handoff(hosturl)
-	}
-	
-	function handleAbort(){
-		console.log("Aborted.")
-		hideConnecting();
-		curr_req = false;
-	}
-	
-	function handleFailure(data){
-		console.log("Failure:",data)
-		console.log("Could not connect to server...")
-		if(data.error == 'timeout'){
-			displayError("The request timed out.")
-		} else if(data.error == 'abort'){
-			displayError("The request was aborted.")
-		} else if(isNaN(data.error)){
-			displayError("Got HTTP error "+data.error.toString()+" from server, are you connecting to a Jellyfin Server?")
-		} else {
-			displayError("Unknown error occured, are you connecting to a Jellyfin Server?")
-		}
-		 
-		hideConnecting();
-		storage.remove('connected_server');
-	}
-	
-	function abort(){
-		if(curr_req){
-			curr_req.abort()
-		} else {
+
+		function handleAbort() {
+			console.log("Aborted.")
 			hideConnecting();
+			curr_req = false;
 		}
-		console.log("Aborting...");
-	}
-	
-	function handoff(url){
-		console.log("Handoff called with: ", url)
-		//hideConnecting();
-		location.href=url;
-	}
+
+		function handleFailure(data) {
+			console.log("Failure:", data)
+			console.log("Could not connect to server...")
+			if (data.error == 'timeout') {
+				displayError("The request timed out.")
+			} else if (data.error == 'abort') {
+				displayError("The request was aborted.")
+			} else if (isNaN(data.error)) {
+				displayError("Got HTTP error " + data.error.toString() + " from server, are you connecting to a Jellyfin Server?")
+			} else {
+				displayError("Unknown error occured, are you connecting to a Jellyfin Server?")
+			}
+
+			hideConnecting();
+			storage.remove('connected_server');
+		}
+
+		function abort() {
+			if (curr_req) {
+				curr_req.abort()
+			} else {
+				hideConnecting();
+			}
+			console.log("Aborting...");
+		}
+
+		function handoff(url) {
+			console.log("Handoff called with: ", url)
+			//hideConnecting();
+			location.href = url;
+		}
 	</script>
-	
+
 </head>
+
 <body onload="Init();">
 	<div class="container">
 		<div id="logo">
 			<img src="assets/banner-dark.png">
 		</div>
-		<div id="serverInfoForm">				
+		<div id="serverInfoForm">
 			<p style="display:none; color: red; font-weight: bold; text-align: center;" id="error">&nbsp;</p>
 			<form>
-			<input type="text" id="hostname" name="hostname" placeholder="jellfin.local" tabindex="0"/><br>
-			<input type="text" id="port" name="port" placeholder="8096" tabindex="1"/><br>
-			<input type="text" id="schema" name="schema" placeholder="https" tabindex="2"/><br>
-			<input type="checkbox" id="auto_connect" name="auto_connect" onclick="return handleCheckbox(this, true);" onkeydown="return handleCheckbox(this, event);" tabindex="3" value="1"/>
-			<label for="auto_connect">Automatically connect on app launch.</label><br>
-			<button id="connect" type="button" onclick="return handleServerSelect();" tabindex="4">Connect</button>
+				<input type="text" id="hostname" name="hostname" placeholder="jellfin.local" tabindex="0" /><br>
+				<input type="text" id="port" name="port" placeholder="8096" tabindex="1" /><br>
+				<input type="text" id="schema" name="schema" placeholder="https" tabindex="2" /><br>
+				<input type="checkbox" id="auto_connect" name="auto_connect"
+					onclick="return handleCheckbox(this, true);" onkeydown="return handleCheckbox(this, event);"
+					tabindex="3" value="1" />
+				<label for="auto_connect">Automatically connect on app launch.</label><br>
+				<button id="connect" type="button" onclick="return handleServerSelect();" tabindex="4">Connect</button>
 			</form>
 		</div>
 		<div id="busy" style="display:none;">
@@ -371,4 +380,5 @@ input[type=text]:focus, textarea:focus {
 		</div>
 	</div>
 </body>
+
 </html>
