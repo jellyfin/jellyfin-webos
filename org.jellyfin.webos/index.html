@@ -58,7 +58,6 @@
 		}
 		
 		#error {
-			display:none;
 			color: red;
 			font-weight: bold;
 			text-align: center;
@@ -355,7 +354,7 @@
 			<img src="assets/banner-dark.png">
 		</div>
 		<div id="serverInfoForm">
-			<p id="error">&nbsp;</p>
+			<p id="error" style="display: none;">&nbsp;</p>
 			<form onsubmit="return false;">
 				<input type="url" id="baseurl" name="baseurl" placeholder="https://jellfin.local:8096" tabindex="0" /><br>				
 				<input type="checkbox" id="auto_connect" name="auto_connect"
