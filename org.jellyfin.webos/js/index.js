@@ -6,6 +6,15 @@ function isVisible(element) {
     return element.offsetWidth > 0 && element.offsetHeight > 0;
 }
 
+function findIndex(array, currentNode) {
+    //This just implements the following function which is not available on some LG TVs
+    //Array.from(allElements).findIndex(function (el) { return currentNode.isEqualNode(el); })
+    for (var i = 0, item; item = array[i]; i++) {
+        if (currentNode.isEqualNode(item))
+            return i;
+    }
+}
+
 function navigate(amount) {
     console.log("Navigating " + amount.toString() + "...")
     var element = document.activeElement;
@@ -21,7 +30,7 @@ function navigate(amount) {
         const allElements = document.querySelectorAll('input, button, a, area, object, select, textarea, [contenteditable]');
 
         //Find the current tab index.
-        const currentIndex = Array.from(allElements).findIndex(function (el) { return currentNode.isEqualNode(el); })
+        const currentIndex = findIndex(allElements, currentNode);
 
         //focus the following element
         if (allElements[currentIndex + amount])
