@@ -2,8 +2,31 @@ var curr_req = false;
 var server_info = false;
 var manifest = false;
 
+//Adds .includes to string to do substring matching
+if (!String.prototype.includes) {
+  String.prototype.includes = function(search, start) {
+    'use strict';
+
+    if (search instanceof RegExp) {
+      throw TypeError('first argument must not be a RegExp');
+    } 
+    if (start === undefined) { start = 0; }
+    return this.indexOf(search, start) !== -1;
+  };
+}
+
+
 function isVisible(element) {
     return element.offsetWidth > 0 && element.offsetHeight > 0;
+}
+
+function findIndex(array, currentNode) {
+    //This just implements the following function which is not available on some LG TVs
+    //Array.from(allElements).findIndex(function (el) { return currentNode.isEqualNode(el); })
+    for (var i = 0, item; item = array[i]; i++) {
+        if (currentNode.isEqualNode(item))
+            return i;
+    }
 }
 
 function navigate(amount) {
@@ -21,8 +44,8 @@ function navigate(amount) {
         const allElements = document.querySelectorAll('input, button, a, area, object, select, textarea, [contenteditable]');
 
         //Find the current tab index.
-        const currentIndex = Array.from(allElements).findIndex(function (el) { return currentNode.isEqualNode(el); })
-
+        const currentIndex = findIndex(allElements, currentNode);
+        
         //focus the following element
         if (allElements[currentIndex + amount])
             allElements[currentIndex + amount].focus();
@@ -193,7 +216,12 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
 }
 
 function handleSuccessManifest(data, baseurl) {
-    var hosturl = baseurl + "/web/" + data.start_url;
+    if(data.start_url.includes("/web")){
+        var hosturl = baseurl + "/" + data.start_url;
+    } else {
+        var hosturl = baseurl + "/web/" + data.start_url;
+    }
+
     curr_req = false;
 
     info = storage.get('connected_server')
