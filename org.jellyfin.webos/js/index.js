@@ -6,15 +6,6 @@ function isVisible(element) {
     return element.offsetWidth > 0 && element.offsetHeight > 0;
 }
 
-function findIndex(array, currentNode) {
-    //This just implements the following function which is not available on some LG TVs
-    //Array.from(allElements).findIndex(function (el) { return currentNode.isEqualNode(el); })
-    for (var i = 0, item; item = array[i]; i++) {
-        if (currentNode.isEqualNode(item))
-            return i;
-    }
-}
-
 function navigate(amount) {
     console.log("Navigating " + amount.toString() + "...")
     var element = document.activeElement;
@@ -30,7 +21,7 @@ function navigate(amount) {
         const allElements = document.querySelectorAll('input, button, a, area, object, select, textarea, [contenteditable]');
 
         //Find the current tab index.
-        const currentIndex = findIndex(allElements, currentNode);
+        const currentIndex = Array.from(allElements).findIndex(function (el) { return currentNode.isEqualNode(el); })
 
         //focus the following element
         if (allElements[currentIndex + amount])
@@ -97,9 +88,7 @@ function Init() {
     navigationInit();
     if (storage.exists('connected_server')) {
         data = storage.get('connected_server')
-        document.querySelector('#hostname').value = data.hostname
-        document.querySelector('#port').value = data.port
-        document.querySelector('#schema').value = data.schema
+        document.querySelector('#baseurl').value = data.baseurl
         document.querySelector('#auto_connect').checked = data.auto_connect
         if (window.performance && window.performance.navigation.type == window.performance.navigation.TYPE_BACK_FORWARD) {
             console.log('Got here using the browser "Back" or "Forward" button, inhibiting auto connect.');
@@ -111,43 +100,31 @@ function Init() {
         }
     }
 }
+// Sourced from jQuery Validation
+function validURL(str) {
+    pattern = /^(https?):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(\#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i;
+    return !!pattern.test(str);
+}
+
 function handleServerSelect() {
-    var schema = document.querySelector('#schema').value;
-    var hostname = document.querySelector('#hostname').value;
-    var port = parseInt(document.querySelector('#port').value);
+    var baseurl = document.querySelector('#baseurl').value;
     var auto_connect = document.querySelector('#auto_connect').checked;
 
-    if (schema == '') {
-        schema = 'https';
-    } else if (schema != 'http' && schema != 'https') {
-        //TODO throw error
-        schema = 'http';
-    }
+    if (validURL(baseurl)) {
 
-    //TODO verify hostname
-    if (hostname == '') {
-        hostname = 'jellyfin.local'
-    }
+        displayConnecting();
+        console.log(baseurl, auto_connect);
 
-    if (isNaN(port) || port === 0) {
-        if (schema == 'http') {
-            port = 8096;
-        } else if (schema == 'https') {
-            port = 8920;
-        } else {
-            //TODO throw error
-            port = 8920;
+        if (curr_req) {
+            console.log("There is an active request.");
+            abort();
         }
+        hideError();
+        getServerInfo(baseurl, auto_connect);
+    } else {
+        console.log(baseurl);
+        displayError("Please enter a valid URL, it needs a scheme (http:// or https://), a hostname or IP (ex. jellyfin.local or 192.168.0.2) and a port (ex. :8096 or :8920).");
     }
-    displayConnecting();
-    console.log(schema, hostname, port, auto_connect);
-
-    if (curr_req) {
-        console.log("There is an active request.");
-        abort();
-    }
-    hideError();
-    getServerInfo(schema, hostname, port, auto_connect);
 }
 
 function displayError(error) {
@@ -171,14 +148,11 @@ function hideConnecting() {
     document.querySelector('#busy').style.display = 'none';
     navigationInit();
 }
-function getServerInfo(schema, hostname, port, auto_connect) {
-
-    baseurl = schema + '://' + hostname + ':' + port;
-
+function getServerInfo(baseurl, auto_connect) {
     curr_req = ajax.request(baseurl + "/System/Info/Public", {
         method: "GET",
         success: function (data) {
-            handleSuccessServerInfo(data, baseurl, schema, hostname, port, auto_connect);
+            handleSuccessServerInfo(data, baseurl, auto_connect);
         },
         error: handleFailure,
         abort: handleAbort,
@@ -198,27 +172,27 @@ function getManifest(baseurl) {
     });
 }
 
-function handleSuccessServerInfo(data, baseurl, schema, hostname, port, auto_connect) {
+function handleSuccessServerInfo(data, baseurl, auto_connect) {
     curr_req = false;
     if (storage.exists('connected_server')) {
         info = storage.get('connected_server')
-        if (info.hostname == hostname && info.port == port) {
+        if (info.baseurl == baseurl) {
             if (info.id != data.Id && info.id !== false) {
                 //server has changed warn user.
                 hideConnecting();
                 displayError("The server ID has changed since the last connection, please check if you are reaching your own server. To connect anyway, click connect again.");
-                storage.set('connected_server', { 'hostname': hostname, 'port': port, 'schema': schema, 'auto_connect': false, 'id': false })
+                storage.set('connected_server', { 'baseurl': baseurl, 'auto_connect': false, 'id': false })
                 return false
             }
         }
     }
 
-    storage.set('connected_server', { 'hostname': hostname, 'port': port, 'schema': schema, 'auto_connect': auto_connect, 'id': data.Id })
+    storage.set('connected_server', { 'baseurl': baseurl, 'auto_connect': auto_connect, 'id': data.Id })
 
     getManifest(baseurl)
 }
 
-function handleSuccessManifest(data, baseurl, schema, hostname, port) {
+function handleSuccessManifest(data, baseurl) {
     var hosturl = baseurl + "/web/" + data.start_url;
     curr_req = false;
 
@@ -226,7 +200,6 @@ function handleSuccessManifest(data, baseurl, schema, hostname, port) {
     info['hosturl'] = hosturl
     info['baseurl'] = baseurl
     storage.set('connected_server', info)
-    console.log(hosturl);
     console.log(info);
     handoff(hosturl)
 }
