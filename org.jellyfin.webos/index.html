@@ -3,6 +3,7 @@
 
 <head>
 	<title>Jellyfin for webOS</title>
+	<link rel="stylesheet" href="css/main.css" type="text/css"/>
 	<script src="webOSTVjs-1.1.0/webOSTV.js" charset="utf-8"></script>
 	<script src="webOSTVjs-1.1.0/webOSTV-dev.js" charset="utf-8"></script>
 	<script src="js/ajax.js" charset="utf-8"></script>
@@ -16,7 +17,7 @@
 			<img src="assets/banner-dark.png">
 		</div>
 		<div id="serverInfoForm">
-			<p id="error">&nbsp;</p>
+			<p id="error" style="display: none;">&nbsp;</p>
 			<form onsubmit="return false;">
 				<input type="url" id="baseurl" name="baseurl" placeholder="https://jellfin.local:8096" tabindex="0" /><br>
 				<input type="checkbox" id="auto_connect" name="auto_connect"
