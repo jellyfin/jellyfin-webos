@@ -15,6 +15,9 @@ body {
     text-align: center;
     color: #FFFFFF;
     display: flex;
+    display: -webkit-box;
+    -webkit-box-pack: center;
+    -webkit-box-orient: vertical;
     flex-direction: column;
     flex-wrap: flex-direction;
     justify-content: center;
@@ -28,11 +31,11 @@ body {
 }
 
 #logo {
-    width: 60%;
+    max-width: 100%;
 }
 
 #logo img {
-    width: 60%;
+    width: 40%;
 }
 
 input,
