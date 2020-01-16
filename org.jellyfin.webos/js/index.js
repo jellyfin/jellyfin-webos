@@ -89,7 +89,7 @@ document.onkeydown = function (evt) {
 function handleCheckbox(elem, evt) {
     console.log(elem);
     if (evt === true) {
-        elem.checked = !elem.checked; //click event
+        return true; // webos should be capable of toggling the checkbox by itself
     } else {
         evt = evt || window.event; //keydown event
         if (evt.keyCode == 13 || evt.keyCode == 32) { //OK button or Space
@@ -253,6 +253,7 @@ function handleFailure(data) {
 
     hideConnecting();
     storage.remove('connected_server');
+    curr_req = false;
 }
 
 function abort() {
