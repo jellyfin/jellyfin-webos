@@ -68,6 +68,10 @@ function rightArrowPressed() {
     // Your stuff here
 }
 
+function backPressed() {
+    webOS.platformBack();
+}
+
 document.onkeydown = function (evt) {
     evt = evt || window.event;
     switch (evt.keyCode) {
@@ -82,6 +86,9 @@ document.onkeydown = function (evt) {
             break;
         case 40:
             downArrowPressed();
+            break;
+        case 461: // Back
+            backPressed();
             break;
     }
 };
@@ -268,5 +275,15 @@ function abort() {
 function handoff(url) {
     console.log("Handoff called with: ", url)
     //hideConnecting();
-    location.href = url;
+
+    document.querySelector('.container').style.display = 'none';
+
+    var contentFrame = document.querySelector('#contentFrame');
+
+    contentFrame.onload = function () {
+        contentFrame.contentWindow.webOS = webOS;
+    };
+
+    contentFrame.style.display = '';
+    contentFrame.src = url;
 }
