@@ -279,10 +279,47 @@ function handoff(url) {
     document.querySelector('.container').style.display = 'none';
 
     var contentFrame = document.querySelector('#contentFrame');
+    var contentWindow = contentFrame.contentWindow;
 
-    contentFrame.onload = function () {
-        contentFrame.contentWindow.webOS = webOS;
-    };
+    var timer;
+    var loaded = false;
+
+    function onLoad() {
+        if (loaded) {
+            return;
+        }
+
+        loaded = true;
+
+        clearInterval(timer);
+        contentFrame.contentDocument.removeEventListener('DOMContentLoaded', onLoad);
+
+        console.log('WebOS adapter');
+
+        // In case of CORS issue replace this with script injecting
+        contentWindow.webOS = webOS;
+    }
+
+    contentWindow.addEventListener('unload', function() {
+        timer = setInterval(function () {
+            var contentDocument = contentFrame.contentDocument;
+
+            switch (contentDocument.readyState) {
+                case 'loading':
+                    clearInterval(timer);
+                    contentDocument.addEventListener('DOMContentLoaded', onLoad);
+                    break;
+
+                // In the case of "loading" is not caught
+                case 'interactive':
+                    onLoad();
+                    break;
+            }
+        }, 0);
+    });
+
+    // In the case of "loading" and "interactive" are not caught
+    contentFrame.addEventListener('load', onLoad);
 
     contentFrame.style.display = '';
     contentFrame.src = url;
