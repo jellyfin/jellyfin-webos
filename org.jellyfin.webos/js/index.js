@@ -272,6 +272,22 @@ function abort() {
     console.log("Aborting...");
 }
 
+function injectScript(document, url) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url);
+    xhr.onload = function () {
+        injectScriptText(document, xhr.responseText);
+    };
+    xhr.send();
+}
+
+function injectScriptText(document, text) {
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.innerHTML = text;
+    document.head.appendChild(script);
+}
+
 function handoff(url) {
     console.log("Handoff called with: ", url)
     //hideConnecting();
@@ -282,25 +298,18 @@ function handoff(url) {
     var contentWindow = contentFrame.contentWindow;
 
     var timer;
-    var loaded = false;
 
     function onLoad() {
-        if (loaded) {
-            return;
-        }
-
-        loaded = true;
-
         clearInterval(timer);
         contentFrame.contentDocument.removeEventListener('DOMContentLoaded', onLoad);
+        contentFrame.removeEventListener('load', onLoad);
 
-        console.log('WebOS adapter');
-
-        // In case of CORS issue replace this with script injecting
-        contentWindow.webOS = webOS;
+        injectScript(contentFrame.contentDocument, 'js/webOS.js');
     }
 
-    contentWindow.addEventListener('unload', function() {
+    function onUnload() {
+        contentWindow.removeEventListener('unload', onUnload);
+
         timer = setInterval(function () {
             var contentDocument = contentFrame.contentDocument;
 
@@ -316,7 +325,9 @@ function handoff(url) {
                     break;
             }
         }, 0);
-    });
+    }
+
+    contentWindow.addEventListener('unload', onUnload);
 
     // In the case of "loading" and "interactive" are not caught
     contentFrame.addEventListener('load', onLoad);
@@ -324,3 +335,18 @@ function handoff(url) {
     contentFrame.style.display = '';
     contentFrame.src = url;
 }
+
+window.addEventListener('message', function (msg) {
+    msg = msg.data;
+
+    var contentFrame = document.querySelector('#contentFrame');
+
+    switch (msg.type) {
+        case 'AppHost.exit':
+            document.querySelector('.container').style.display = '';
+            hideConnecting();
+            contentFrame.style.display = 'none';
+            contentFrame.src = '';
+            break;
+    }
+});
