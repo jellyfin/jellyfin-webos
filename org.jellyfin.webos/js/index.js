@@ -1,6 +1,7 @@
 var curr_req = false;
 var server_info = false;
 var manifest = false;
+var textToInject = false;
 
 //Adds .includes to string to do substring matching
 if (!String.prototype.includes) {
@@ -236,7 +237,15 @@ function handleSuccessManifest(data, baseurl) {
     info['baseurl'] = baseurl
     storage.set('connected_server', info)
     console.log(info);
-    handoff(hosturl)
+
+    getTextToInject().then(function () {
+        handoff(hosturl);
+    }).catch(function (error) {
+        console.error(error);
+        displayError(error);
+        hideConnecting();
+        curr_req = false;
+    });
 }
 
 function handleAbort() {
@@ -272,13 +281,29 @@ function abort() {
     console.log("Aborting...");
 }
 
-function injectScript(document, url) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url);
-    xhr.onload = function () {
-        injectScriptText(document, xhr.responseText);
-    };
-    xhr.send();
+function getTextToInject() {
+    var url = 'js/webOS.js';
+
+    return new Promise(function (resolve, reject) {
+        if (textToInject) {
+            resolve(textToInject);
+        } else {
+            var xhr = new XMLHttpRequest();
+
+            xhr.open('GET', url);
+
+            xhr.onload = function () {
+                textToInject = xhr.responseText;
+                resolve(textToInject);
+            };
+
+            xhr.onerror = function () {
+                reject("Failed to load '" + url + "'");
+            }
+
+            xhr.send();
+        }
+    });
 }
 
 function injectScriptText(document, text) {
@@ -304,7 +329,7 @@ function handoff(url) {
         contentFrame.contentDocument.removeEventListener('DOMContentLoaded', onLoad);
         contentFrame.removeEventListener('load', onLoad);
 
-        injectScript(contentFrame.contentDocument, 'js/webOS.js');
+        injectScriptText(contentFrame.contentDocument, textToInject);
     }
 
     function onUnload() {
