@@ -3,6 +3,13 @@ var server_info = false;
 var manifest = false;
 var textToInject = false;
 
+var appInfo = {
+    deviceId: null,
+    deviceName: 'LG Smart TV',
+    appName: 'Jellyfin for WebOS',
+    appVersion: '0.0.0'
+};
+
 //Adds .includes to string to do substring matching
 if (!String.prototype.includes) {
   String.prototype.includes = function(search, start) {
@@ -107,6 +114,24 @@ function handleCheckbox(elem, evt) {
     return false;
 }
 
+// Similar to jellyfin-web
+function generateDeviceId() {
+    return btoa([navigator.userAgent, new Date().getTime()].join('|')).replace(/=/g, '1');
+}
+
+function getDeviceId() {
+    // Use variable '_deviceId2' to mimic jellyfin-web
+
+    var deviceId = storage.get('_deviceId2');
+
+    if (!deviceId) {
+        deviceId = generateDeviceId();
+        storage.set('_deviceId2', deviceId);
+    }
+
+    return deviceId;
+}
+
 function navigationInit() {
     if (isVisible(document.querySelector('#connect'))) {
         document.querySelector('#connect').focus()
@@ -116,7 +141,18 @@ function navigationInit() {
 }
 
 function Init() {
+    appInfo.deviceId = getDeviceId();
+
+    webOS.fetchAppInfo(function (info) {
+        if (info) {
+            appInfo.appVersion = info.version;
+        } else {
+            console.error('Error occurs while getting appinfo.json.');
+        }
+    });
+
     navigationInit();
+
     if (storage.exists('connected_server')) {
         data = storage.get('connected_server')
         document.querySelector('#baseurl').value = data.baseurl
@@ -329,6 +365,7 @@ function handoff(url) {
         contentFrame.contentDocument.removeEventListener('DOMContentLoaded', onLoad);
         contentFrame.removeEventListener('load', onLoad);
 
+        injectScriptText(contentFrame.contentDocument, 'window.AppInfo = ' + JSON.stringify(appInfo) + ';');
         injectScriptText(contentFrame.contentDocument, textToInject);
     }
 
@@ -367,11 +404,14 @@ window.addEventListener('message', function (msg) {
     var contentFrame = document.querySelector('#contentFrame');
 
     switch (msg.type) {
-        case 'AppHost.exit':
+        case 'selectServer':
             document.querySelector('.container').style.display = '';
             hideConnecting();
             contentFrame.style.display = 'none';
             contentFrame.src = '';
+            break;
+        case 'AppHost.exit':
+            webOS.platformBack();
             break;
     }
 });
