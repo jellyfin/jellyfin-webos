@@ -1,7 +1,6 @@
 var curr_req = false;
 var server_info = false;
 var manifest = false;
-var textToInject = false;
 
 var appInfo = {
     deviceId: null,
@@ -274,8 +273,8 @@ function handleSuccessManifest(data, baseurl) {
     storage.set('connected_server', info)
     console.log(info);
 
-    getTextToInject().then(function () {
-        handoff(hosturl);
+    getTextToInject().then(function (bundle) {
+        handoff(hosturl, bundle);
     }).catch(function (error) {
         console.error(error);
         displayError(error);
@@ -317,29 +316,42 @@ function abort() {
     console.log("Aborting...");
 }
 
-function getTextToInject() {
-    var url = 'js/webOS.js';
-
+function loadUrl(url) {
     return new Promise(function (resolve, reject) {
-        if (textToInject) {
-            resolve(textToInject);
-        } else {
-            var xhr = new XMLHttpRequest();
+        var xhr = new XMLHttpRequest();
 
-            xhr.open('GET', url);
+        xhr.open('GET', url);
 
-            xhr.onload = function () {
-                textToInject = xhr.responseText;
-                resolve(textToInject);
-            };
+        xhr.onload = function () {
+            resolve(xhr.responseText);
+        };
 
-            xhr.onerror = function () {
-                reject("Failed to load '" + url + "'");
-            }
-
-            xhr.send();
+        xhr.onerror = function () {
+            reject("Failed to load '" + url + "'");
         }
+
+        xhr.send();
     });
+}
+
+function getTextToInject() {
+    var bundle = {};
+
+    var urls = ['js/webOS.js', 'css/webOS.css'];
+
+    var p = Promise.resolve();
+
+    urls.forEach(function (url) {
+        p = p.then(function () {
+            return loadUrl(url);
+        }).then(function (data) {
+            var ext = url.split('.').pop();
+            bundle[ext] = (bundle[ext] || '') + data;
+            return bundle;
+        });
+    });
+
+    return p;
 }
 
 function injectScriptText(document, text) {
@@ -349,7 +361,13 @@ function injectScriptText(document, text) {
     document.head.appendChild(script);
 }
 
-function handoff(url) {
+function injectStyleText(document, text) {
+    var style = document.createElement('style');
+    style.innerHTML = text;
+    document.body.appendChild(style);
+}
+
+function handoff(url, bundle) {
     console.log("Handoff called with: ", url)
     //hideConnecting();
 
@@ -366,7 +384,14 @@ function handoff(url) {
         contentFrame.removeEventListener('load', onLoad);
 
         injectScriptText(contentFrame.contentDocument, 'window.AppInfo = ' + JSON.stringify(appInfo) + ';');
-        injectScriptText(contentFrame.contentDocument, textToInject);
+
+        if (bundle.js) {
+            injectScriptText(contentFrame.contentDocument, bundle.js);
+        }
+
+        if (bundle.css) {
+            injectStyleText(contentFrame.contentDocument, bundle.css);
+        }
     }
 
     function onUnload() {
