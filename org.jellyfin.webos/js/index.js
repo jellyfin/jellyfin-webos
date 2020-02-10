@@ -2,6 +2,13 @@ var curr_req = false;
 var server_info = false;
 var manifest = false;
 
+var appInfo = {
+    deviceId: null,
+    deviceName: 'LG Smart TV',
+    appName: 'Jellyfin for WebOS',
+    appVersion: '0.0.0'
+};
+
 //Adds .includes to string to do substring matching
 if (!String.prototype.includes) {
   String.prototype.includes = function(search, start) {
@@ -68,6 +75,10 @@ function rightArrowPressed() {
     // Your stuff here
 }
 
+function backPressed() {
+    webOS.platformBack();
+}
+
 document.onkeydown = function (evt) {
     evt = evt || window.event;
     switch (evt.keyCode) {
@@ -82,6 +93,9 @@ document.onkeydown = function (evt) {
             break;
         case 40:
             downArrowPressed();
+            break;
+        case 461: // Back
+            backPressed();
             break;
     }
 };
@@ -99,6 +113,24 @@ function handleCheckbox(elem, evt) {
     return false;
 }
 
+// Similar to jellyfin-web
+function generateDeviceId() {
+    return btoa([navigator.userAgent, new Date().getTime()].join('|')).replace(/=/g, '1');
+}
+
+function getDeviceId() {
+    // Use variable '_deviceId2' to mimic jellyfin-web
+
+    var deviceId = storage.get('_deviceId2');
+
+    if (!deviceId) {
+        deviceId = generateDeviceId();
+        storage.set('_deviceId2', deviceId);
+    }
+
+    return deviceId;
+}
+
 function navigationInit() {
     if (isVisible(document.querySelector('#connect'))) {
         document.querySelector('#connect').focus()
@@ -108,7 +140,18 @@ function navigationInit() {
 }
 
 function Init() {
+    appInfo.deviceId = getDeviceId();
+
+    webOS.fetchAppInfo(function (info) {
+        if (info) {
+            appInfo.appVersion = info.version;
+        } else {
+            console.error('Error occurs while getting appinfo.json.');
+        }
+    });
+
     navigationInit();
+
     if (storage.exists('connected_server')) {
         data = storage.get('connected_server')
         document.querySelector('#baseurl').value = data.baseurl
@@ -229,7 +272,15 @@ function handleSuccessManifest(data, baseurl) {
     info['baseurl'] = baseurl
     storage.set('connected_server', info)
     console.log(info);
-    handoff(hosturl)
+
+    getTextToInject().then(function (bundle) {
+        handoff(hosturl, bundle);
+    }).catch(function (error) {
+        console.error(error);
+        displayError(error);
+        hideConnecting();
+        curr_req = false;
+    });
 }
 
 function handleAbort() {
@@ -265,8 +316,127 @@ function abort() {
     console.log("Aborting...");
 }
 
-function handoff(url) {
+function loadUrl(url) {
+    return new Promise(function (resolve, reject) {
+        var xhr = new XMLHttpRequest();
+
+        xhr.open('GET', url);
+
+        xhr.onload = function () {
+            resolve(xhr.responseText);
+        };
+
+        xhr.onerror = function () {
+            reject("Failed to load '" + url + "'");
+        }
+
+        xhr.send();
+    });
+}
+
+function getTextToInject() {
+    var bundle = {};
+
+    var urls = ['js/webOS.js', 'css/webOS.css'];
+
+    var p = Promise.resolve();
+
+    urls.forEach(function (url) {
+        p = p.then(function () {
+            return loadUrl(url);
+        }).then(function (data) {
+            var ext = url.split('.').pop();
+            bundle[ext] = (bundle[ext] || '') + data;
+            return bundle;
+        });
+    });
+
+    return p;
+}
+
+function injectScriptText(document, text) {
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.innerHTML = text;
+    document.head.appendChild(script);
+}
+
+function injectStyleText(document, text) {
+    var style = document.createElement('style');
+    style.innerHTML = text;
+    document.body.appendChild(style);
+}
+
+function handoff(url, bundle) {
     console.log("Handoff called with: ", url)
     //hideConnecting();
-    location.href = url;
+
+    document.querySelector('.container').style.display = 'none';
+
+    var contentFrame = document.querySelector('#contentFrame');
+    var contentWindow = contentFrame.contentWindow;
+
+    var timer;
+
+    function onLoad() {
+        clearInterval(timer);
+        contentFrame.contentDocument.removeEventListener('DOMContentLoaded', onLoad);
+        contentFrame.removeEventListener('load', onLoad);
+
+        injectScriptText(contentFrame.contentDocument, 'window.AppInfo = ' + JSON.stringify(appInfo) + ';');
+
+        if (bundle.js) {
+            injectScriptText(contentFrame.contentDocument, bundle.js);
+        }
+
+        if (bundle.css) {
+            injectStyleText(contentFrame.contentDocument, bundle.css);
+        }
+    }
+
+    function onUnload() {
+        contentWindow.removeEventListener('unload', onUnload);
+
+        timer = setInterval(function () {
+            var contentDocument = contentFrame.contentDocument;
+
+            switch (contentDocument.readyState) {
+                case 'loading':
+                    clearInterval(timer);
+                    contentDocument.addEventListener('DOMContentLoaded', onLoad);
+                    break;
+
+                // In the case of "loading" is not caught
+                case 'interactive':
+                    onLoad();
+                    break;
+            }
+        }, 0);
+    }
+
+    contentWindow.addEventListener('unload', onUnload);
+
+    // In the case of "loading" and "interactive" are not caught
+    contentFrame.addEventListener('load', onLoad);
+
+    contentFrame.style.display = '';
+    contentFrame.src = url;
 }
+
+window.addEventListener('message', function (msg) {
+    msg = msg.data;
+
+    var contentFrame = document.querySelector('#contentFrame');
+
+    switch (msg.type) {
+        case 'selectServer':
+            document.querySelector('.container').style.display = '';
+            hideConnecting();
+            contentFrame.style.display = 'none';
+            contentFrame.src = '';
+            break;
+        case 'AppHost.exit':
+            webOS.platformBack();
+            break;
+    }
+});

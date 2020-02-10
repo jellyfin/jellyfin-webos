@@ -1,0 +1,3 @@
+.layout-tv body::-webkit-scrollbar {
+    display: none;
+}
