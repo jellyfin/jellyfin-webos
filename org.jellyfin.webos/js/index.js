@@ -161,14 +161,14 @@ function Init() {
 
     if (storage.exists('connected_server')) {
         data = storage.get('connected_server')
-        document.querySelector('#baseurl').value = data.baseurl
-        document.querySelector('#auto_connect').checked = data.auto_connect
+        document.querySelector('#baseurl').value = data.baseurl;
+        document.querySelector('#auto_connect').checked = data.auto_connect;
         if (window.performance && window.performance.navigation.type == window.performance.navigation.TYPE_BACK_FORWARD) {
             console.log('Got here using the browser "Back" or "Forward" button, inhibiting auto connect.');
         } else {
             if (data.auto_connect) {
-                console.log("Auto connecting...")
-                handleServerSelect()
+                console.log("Auto connecting...");
+                handleServerSelect();
             }
         }
     }
@@ -179,8 +179,28 @@ function validURL(str) {
     return !!pattern.test(str);
 }
 
+function normalizeUrl(url) {
+    url = url.trimLeft ? url.trimLeft() : url.trimStart();
+    if (url.indexOf("http://") != 0 && url.indexOf("https://") != 0) {
+        // assume http
+        url = "http://" + url;
+    }
+    // normalize multiple slashes as this trips WebOS in some cases
+    var parts = url.split("://");
+    for (var i = 1; i < parts.length; i++) {
+        var part = parts[i];
+        while (true) {
+            var newpart = part.replace("//", "/");
+            if (newpart.length == part.length) break;
+            part = newpart;
+        }
+        parts[i] = part;
+    }
+    return parts.join("://");
+}
+
 function handleServerSelect() {
-    var baseurl = document.querySelector('#baseurl').value;
+    var baseurl = normalizeUrl(document.querySelector('#baseurl').value);
     var auto_connect = document.querySelector('#auto_connect').checked;
 
     if (validURL(baseurl)) {
@@ -222,7 +242,7 @@ function hideConnecting() {
     navigationInit();
 }
 function getServerInfo(baseurl, auto_connect) {
-    curr_req = ajax.request(baseurl + "/System/Info/Public", {
+    curr_req = ajax.request(normalizeUrl(baseurl + "/System/Info/Public"), {
         method: "GET",
         success: function (data) {
             handleSuccessServerInfo(data, baseurl, auto_connect);
@@ -234,7 +254,7 @@ function getServerInfo(baseurl, auto_connect) {
 }
 
 function getManifest(baseurl) {
-    curr_req = ajax.request(baseurl + "/web/manifest.json", {
+    curr_req = ajax.request(normalizeUrl(baseurl + "/web/manifest.json"), {
         method: "GET",
         success: function (data) {
             handleSuccessManifest(data, baseurl);
@@ -267,9 +287,9 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
 
 function handleSuccessManifest(data, baseurl) {
     if(data.start_url.includes("/web")){
-        var hosturl = baseurl + "/" + data.start_url;
+        var hosturl = normalizeUrl(baseurl + "/" + data.start_url);
     } else {
-        var hosturl = baseurl + "/web/" + data.start_url;
+        var hosturl = normalizeUrl(baseurl + "/web/" + data.start_url);
     }
 
     curr_req = false;
@@ -279,10 +299,11 @@ function handleSuccessManifest(data, baseurl) {
     info['baseurl'] = baseurl
     storage.set('connected_server', info)
     console.log(info);
-
-    getTextToInject().then(function (bundle) {
+    
+    // avoid Promise as it's buggy in some WebOS
+    getTextToInject(function (bundle) {
         handoff(hosturl, bundle);
-    }).catch(function (error) {
+    }, function (error) {
         console.error(error);
         displayError(error);
         hideConnecting();
@@ -323,42 +344,41 @@ function abort() {
     console.log("Aborting...");
 }
 
-function loadUrl(url) {
-    return new Promise(function (resolve, reject) {
-        var xhr = new XMLHttpRequest();
+function loadUrl(url, success, failure) {
+    var xhr = new XMLHttpRequest();
 
-        xhr.open('GET', url);
+    xhr.open('GET', url);
 
-        xhr.onload = function () {
-            resolve(xhr.responseText);
-        };
+    xhr.onload = function () {
+        success(xhr.responseText);
+    };
 
-        xhr.onerror = function () {
-            reject("Failed to load '" + url + "'");
-        }
+    xhr.onerror = function () {
+        failure("Failed to load '" + url + "'");
+    }
 
-        xhr.send();
-    });
+    xhr.send();
 }
 
-function getTextToInject() {
+function getTextToInject(success, failure) {
     var bundle = {};
 
     var urls = ['js/webOS.js', 'css/webOS.css'];
-
-    var p = Promise.resolve();
-
-    urls.forEach(function (url) {
-        p = p.then(function () {
-            return loadUrl(url);
-        }).then(function (data) {
+    
+    // imitate promises as they're borked in at least WebOS 2
+    var looper = function (idx) {
+        if (idx >= urls.length) {
+            success(bundle);
+        } else {
+            var url = urls[idx];
             var ext = url.split('.').pop();
-            bundle[ext] = (bundle[ext] || '') + data;
-            return bundle;
-        });
-    });
-
-    return p;
+            loadUrl(url, function (data) {
+                bundle[ext] = (bundle[ext] || '') + data;
+                looper(idx + 1);
+            }, failure);
+        }
+    };
+    looper(0);
 }
 
 function injectScriptText(document, text) {

@@ -73,7 +73,7 @@
 
             getDeviceProfile: function (profileBuilder) {
                 postMessage('AppHost.getDeviceProfile');
-                return profileBuilder({ enableMkvProgressive: false });
+                return profileBuilder({ enableMkvProgressive: false, enableSsaRender: true });
             },
 
             getSyncProfile: function (profileBuilder) {
