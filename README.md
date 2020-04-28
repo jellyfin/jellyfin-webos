@@ -2,6 +2,9 @@
 # Jellyfin WebOS client
 This is a small wrapper around the web interface that the server provides (https://github.com/jellyfin/jellyfin-web) so most of the developement happens there.
 
+# LICENSE
+All Jellyfin webOS code is licensed under the MPL 2.0 license, some parts incorporate content licensed under the Apache 2.0 license. All images are taken from and licensed under the same license as https://github.com/jellyfin/jellyfin-ux.
+
 # Installation
 - Install the WebOS SDK from http://webostv.developer.lge.com/sdk/installation/
 - Compile an IPK either with the IDE or with ares-package
