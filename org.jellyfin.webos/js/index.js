@@ -173,6 +173,7 @@ function validURL(str) {
 }
 
 function normalizeUrl(url) {
+    url = url.trimLeft ? url.trimLeft() : url.trimStart();
     if (url.indexOf("http://") != 0 && url.indexOf("https://") != 0) {
         // assume http
         url = "http://" + url;
