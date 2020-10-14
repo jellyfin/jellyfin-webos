@@ -13,7 +13,7 @@ All Jellyfin webOS code is licensed under the MPL 2.0 license, some parts incorp
 # Building with Docker
 Instead of installing the WebOS SDK, it is possible to compile an IPK with the following commands:
 
-```
+```sh
 docker build -t jellyfin_builder .
 docker container run -it --rm -v ${PWD}:/data jellyfin_builder
 ```
