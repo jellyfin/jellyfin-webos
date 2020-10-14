@@ -20,7 +20,7 @@ docker container run -it --rm -v ${PWD}:/data jellyfin_builder
 
 It is also possible to install the pacakge with the container using the following command:
 
-```
+```sh
 docker container run -it --rm -v ${PWD}:/data jellyfin_builder /bin/bash
 ```
 
