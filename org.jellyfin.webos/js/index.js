@@ -1,4 +1,4 @@
-/* 
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -23,7 +23,7 @@ if (!String.prototype.includes) {
 
     if (search instanceof RegExp) {
       throw TypeError('first argument must not be a RegExp');
-    } 
+    }
     if (start === undefined) { start = 0; }
     return this.indexOf(search, start) !== -1;
   };
@@ -59,7 +59,7 @@ function navigate(amount) {
 
         //Find the current tab index.
         const currentIndex = findIndex(allElements, currentNode);
-        
+
         //focus the following element
         if (allElements[currentIndex + amount])
             allElements[currentIndex + amount].focus();
@@ -299,7 +299,7 @@ function handleSuccessManifest(data, baseurl) {
     info['baseurl'] = baseurl
     storage.set('connected_server', info)
     console.log(info);
-    
+
     // avoid Promise as it's buggy in some WebOS
     getTextToInject(function (bundle) {
         handoff(hosturl, bundle);
@@ -364,7 +364,7 @@ function getTextToInject(success, failure) {
     var bundle = {};
 
     var urls = ['js/webOS.js', 'css/webOS.css'];
-    
+
     // imitate promises as they're borked in at least WebOS 2
     var looper = function (idx) {
         if (idx >= urls.length) {
