@@ -6,6 +6,7 @@
 <html>
 
 <head>
+	<meta charset="UTF-8" />
 	<title>Jellyfin for webOS</title>
 	<link rel="stylesheet" href="css/main.css" type="text/css"/>
 	<script src="webOSTVjs-1.2.2/webOSTV.js" charset="utf-8"></script>
@@ -29,6 +30,7 @@
 					tabindex="1" value="1" />
 				<label for="auto_connect">Automatically connect on app launch.</label><br>
 				<button id="connect" type="button" onclick="return handleServerSelect();" tabindex="2">Connect</button>
+				<ul id="serverlist"></ul>
 			</form>
 		</div>
 		<div id="busy" style="display:none;">

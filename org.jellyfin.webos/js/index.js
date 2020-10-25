@@ -467,3 +467,102 @@ window.addEventListener('message', function (msg) {
             break;
     }
 });
+
+
+
+
+var discovered_servers = {};
+
+function renderServerList() {
+    var sl = document.getElementById("serverlist");
+    for (var server_id in discovered_servers) {
+        var server = discovered_servers[server_id];
+        console.log(server);
+
+        var el = document.getElementById("server_" + server.Id);
+
+        if (!el) {
+            el = document.createElement("li");
+            sl.appendChild(el);
+        }
+        el.id = "server_" + server_id;
+        el.innerHTML = "";
+
+        var btn = document.createElement("button");
+        btn.innerText = server.Name;
+        btn.type = "button";
+        btn.onclick = function() {
+            var urlfield = document.getElementById("baseurl");
+            urlfield.value = server.Address;
+            handleServerSelect();
+        }
+        el.appendChild(btn);
+
+        var server_details = document.createTextNode(" " + server.Address + " – " + server.system_info_public.Version);
+
+        el.appendChild(server_details);
+    }
+}
+
+
+var servers_verifying = {};
+
+function verifyThenAdd(server) {
+    if (servers_verifying[server.Id]) {
+        return;
+    }
+    servers_verifying[server.Id] = server;
+
+    curr_req = ajax.request(normalizeUrl(server.Address + "/System/Info/Public"), {
+        method: "GET",
+        success: function (data) {
+            console.log("success");
+            console.log(server);
+            console.log(data);
+
+            // TODO: Do we want to autodiscover only Jellyfin servers, or anything that responds to "who is JellyfinServer?"
+            if (data.ProductName == "Jellyfin Server") {
+                server.system_info_public = data;
+                if (!discovered_servers[server.Id]) {
+                    discovered_servers[server.Id] = server;
+                    renderServerList();
+                }
+            }
+            servers_verifying[server.Id] = true;
+        },
+        error: function (data) {
+            console.log("error");
+            console.log(server);
+            console.log(data);
+            servers_verifying[server.Id] = false;
+        },
+        abort: function () {
+            console.log("abort");
+            console.log(server);
+            servers_verifying[server.Id] = false;
+        },
+        timeout: 5000
+    });
+}
+
+// TODO: disable when not on server selection screen
+var discover = webOS.service.request("luna://org.jellyfin.webos.service", {
+    method: "discover",
+    parameters: {
+        uniqueToken: 'fooo'
+    },
+    subscribe: true,
+    resubscribe: true,
+    onSuccess: function (args) {
+        console.log('OK:', JSON.stringify(args));
+
+        if (args.results) {
+            for (var server_id in args.results) {
+                verifyThenAdd(args.results[server_id]);
+            }
+        }
+    },
+    onFailure: function (args) {
+        console.log('ERR:', JSON.stringify(args));
+    }
+});
