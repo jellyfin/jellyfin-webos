@@ -398,6 +398,7 @@ function handoff(url, bundle) {
     console.log("Handoff called with: ", url)
     //hideConnecting();
 
+    stopDiscovery();
     document.querySelector('.container').style.display = 'none';
 
     var contentFrame = document.querySelector('#contentFrame');
@@ -457,6 +458,7 @@ window.addEventListener('message', function (msg) {
 
     switch (msg.type) {
         case 'selectServer':
+            startDiscovery();
             document.querySelector('.container').style.display = '';
             hideConnecting();
             contentFrame.style.display = 'none';
@@ -468,39 +470,47 @@ window.addEventListener('message', function (msg) {
     }
 });
 
-
-
+/* Server auto-discovery */
 
 var discovered_servers = {};
 
 function renderServerList() {
-    var sl = document.getElementById("serverlist");
+    var server_list = document.getElementById("serverlist");
     for (var server_id in discovered_servers) {
         var server = discovered_servers[server_id];
-        console.log(server);
 
-        var el = document.getElementById("server_" + server.Id);
+        var server_card = document.getElementById("server_" + server.Id);
 
-        if (!el) {
-            el = document.createElement("li");
-            sl.appendChild(el);
+        if (!server_card) {
+            server_card = document.createElement("li");
+            server_card.id = "server_" + server_id;
+            server_card.className = "server_card";
+            server_list.appendChild(server_card);
         }
-        el.id = "server_" + server_id;
-        el.innerHTML = "";
+        server_card.innerHTML = "";
 
+        // Server name
+        var title = document.createElement("div");
+        title.className = "server_card_title";
+        title.innerText = server.Name;
+        server_card.appendChild(title);
+
+        // Server URL
+        var server_url = document.createElement("div");
+        server_url.className = "server_card_url";
+        server_url.innerText = server.Address;
+        server_card.appendChild(server_url);
+
+        // Button
         var btn = document.createElement("button");
-        btn.innerText = server.Name;
+        btn.innerText = "Connect";
         btn.type = "button";
         btn.onclick = function() {
             var urlfield = document.getElementById("baseurl");
             urlfield.value = server.Address;
             handleServerSelect();
         }
-        el.appendChild(btn);
-
-        var server_details = document.createTextNode(" " + server.Address + " – " + server.system_info_public.Version);
-
-        el.appendChild(server_details);
+        server_card.appendChild(btn);
     }
 }
 
@@ -545,24 +555,45 @@ function verifyThenAdd(server) {
     });
 }
 
-// TODO: disable when not on server selection screen
-var discover = webOS.service.request("luna://org.jellyfin.webos.service", {
-    method: "discover",
-    parameters: {
-        uniqueToken: 'fooo'
-    },
-    subscribe: true,
-    resubscribe: true,
-    onSuccess: function (args) {
-        console.log('OK:', JSON.stringify(args));
 
-        if (args.results) {
-            for (var server_id in args.results) {
-                verifyThenAdd(args.results[server_id]);
-            }
-        }
-    },
-    onFailure: function (args) {
-        console.log('ERR:', JSON.stringify(args));
+var discover = null;
+
+function startDiscovery() {
+    if (discover) {
+        return;
     }
-});
+    console.log("Starting server autodiscovery...");
+    discover = webOS.service.request("luna://org.jellyfin.webos.service", {
+        method: "discover",
+        parameters: {
+            uniqueToken: 'fooo'
+        },
+        subscribe: true,
+        resubscribe: true,
+        onSuccess: function (args) {
+            console.log('OK:', JSON.stringify(args));
+
+            if (args.results) {
+                for (var server_id in args.results) {
+                    verifyThenAdd(args.results[server_id]);
+                }
+            }
+        },
+        onFailure: function (args) {
+            console.log('ERR:', JSON.stringify(args));
+        }
+    });
+}
+
+function stopDiscovery() {
+    if (discover) {
+        try {
+            discover.cancel();
+        } catch (err) {
+            console.warn(err);
+        }
+        discover = null;
+    }
+}
+
+startDiscovery();

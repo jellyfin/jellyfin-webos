@@ -1,4 +1,4 @@
-/* 
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -44,7 +44,7 @@ body {
     align-content: center;
 }
 
-.container div {
+.container > div {
     display: inline-block;
     max-width: 60%;
 }
@@ -111,3 +111,22 @@ input[type=checkbox]:focus {
 
 input[type=text]:focus,
 textarea:focus {}
+
+
+.server_card {
+    display: inline-block;
+    min-width: 8em;
+    text-align: center;
+    padding: 0.4em;
+
+    border-radius: 1em;
+    border: 1px solid;
+    margin: 0.3em;
+}
+
+.server_card_version, .server_card_url {
+    color: gray;
+    font-size: 0.7em;
+    margin: 0.3em auto;
+}
+
