@@ -505,9 +505,10 @@ function renderServerList() {
         var btn = document.createElement("button");
         btn.innerText = "Connect";
         btn.type = "button";
+        btn.value = server.Address;
         btn.onclick = function() {
             var urlfield = document.getElementById("baseurl");
-            urlfield.value = server.Address;
+            urlfield.value = this.value;
             handleServerSelect();
         }
         server_card.appendChild(btn);
