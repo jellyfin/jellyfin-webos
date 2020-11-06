@@ -1,0 +1,9 @@
+{
+  "id": "org.jellyfin.webos.service",
+  "description": "Jellyfin Discovery Service",
+  "services": [
+    {
+      "name": "org.jellyfin.webos.service"
+    }
+  ]
+}

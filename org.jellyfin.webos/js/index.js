@@ -1,4 +1,4 @@
-/* 
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -23,7 +23,7 @@ if (!String.prototype.includes) {
 
     if (search instanceof RegExp) {
       throw TypeError('first argument must not be a RegExp');
-    } 
+    }
     if (start === undefined) { start = 0; }
     return this.indexOf(search, start) !== -1;
   };
@@ -59,7 +59,7 @@ function navigate(amount) {
 
         //Find the current tab index.
         const currentIndex = findIndex(allElements, currentNode);
-        
+
         //focus the following element
         if (allElements[currentIndex + amount])
             allElements[currentIndex + amount].focus();
@@ -299,7 +299,7 @@ function handleSuccessManifest(data, baseurl) {
     info['baseurl'] = baseurl
     storage.set('connected_server', info)
     console.log(info);
-    
+
     // avoid Promise as it's buggy in some WebOS
     getTextToInject(function (bundle) {
         handoff(hosturl, bundle);
@@ -364,7 +364,7 @@ function getTextToInject(success, failure) {
     var bundle = {};
 
     var urls = ['js/webOS.js', 'css/webOS.css'];
-    
+
     // imitate promises as they're borked in at least WebOS 2
     var looper = function (idx) {
         if (idx >= urls.length) {
@@ -398,6 +398,7 @@ function handoff(url, bundle) {
     console.log("Handoff called with: ", url)
     //hideConnecting();
 
+    stopDiscovery();
     document.querySelector('.container').style.display = 'none';
 
     var contentFrame = document.querySelector('#contentFrame');
@@ -457,6 +458,7 @@ window.addEventListener('message', function (msg) {
 
     switch (msg.type) {
         case 'selectServer':
+            startDiscovery();
             document.querySelector('.container').style.display = '';
             hideConnecting();
             contentFrame.style.display = 'none';
@@ -467,3 +469,132 @@ window.addEventListener('message', function (msg) {
             break;
     }
 });
+
+/* Server auto-discovery */
+
+var discovered_servers = {};
+
+function renderServerList() {
+    var server_list = document.getElementById("serverlist");
+    for (var server_id in discovered_servers) {
+        var server = discovered_servers[server_id];
+
+        var server_card = document.getElementById("server_" + server.Id);
+
+        if (!server_card) {
+            server_card = document.createElement("li");
+            server_card.id = "server_" + server_id;
+            server_card.className = "server_card";
+            server_list.appendChild(server_card);
+        }
+        server_card.innerHTML = "";
+
+        // Server name
+        var title = document.createElement("div");
+        title.className = "server_card_title";
+        title.innerText = server.Name;
+        server_card.appendChild(title);
+
+        // Server URL
+        var server_url = document.createElement("div");
+        server_url.className = "server_card_url";
+        server_url.innerText = server.Address;
+        server_card.appendChild(server_url);
+
+        // Button
+        var btn = document.createElement("button");
+        btn.innerText = "Connect";
+        btn.type = "button";
+        btn.value = server.Address;
+        btn.onclick = function() {
+            var urlfield = document.getElementById("baseurl");
+            urlfield.value = this.value;
+            handleServerSelect();
+        }
+        server_card.appendChild(btn);
+    }
+}
+
+
+var servers_verifying = {};
+
+function verifyThenAdd(server) {
+    if (servers_verifying[server.Id]) {
+        return;
+    }
+    servers_verifying[server.Id] = server;
+
+    curr_req = ajax.request(normalizeUrl(server.Address + "/System/Info/Public"), {
+        method: "GET",
+        success: function (data) {
+            console.log("success");
+            console.log(server);
+            console.log(data);
+
+            // TODO: Do we want to autodiscover only Jellyfin servers, or anything that responds to "who is JellyfinServer?"
+            if (data.ProductName == "Jellyfin Server") {
+                server.system_info_public = data;
+                if (!discovered_servers[server.Id]) {
+                    discovered_servers[server.Id] = server;
+                    renderServerList();
+                }
+            }
+            servers_verifying[server.Id] = true;
+        },
+        error: function (data) {
+            console.log("error");
+            console.log(server);
+            console.log(data);
+            servers_verifying[server.Id] = false;
+        },
+        abort: function () {
+            console.log("abort");
+            console.log(server);
+            servers_verifying[server.Id] = false;
+        },
+        timeout: 5000
+    });
+}
+
+
+var discover = null;
+
+function startDiscovery() {
+    if (discover) {
+        return;
+    }
+    console.log("Starting server autodiscovery...");
+    discover = webOS.service.request("luna://org.jellyfin.webos.service", {
+        method: "discover",
+        parameters: {
+            uniqueToken: 'fooo'
+        },
+        subscribe: true,
+        resubscribe: true,
+        onSuccess: function (args) {
+            console.log('OK:', JSON.stringify(args));
+
+            if (args.results) {
+                for (var server_id in args.results) {
+                    verifyThenAdd(args.results[server_id]);
+                }
+            }
+        },
+        onFailure: function (args) {
+            console.log('ERR:', JSON.stringify(args));
+        }
+    });
+}
+
+function stopDiscovery() {
+    if (discover) {
+        try {
+            discover.cancel();
+        } catch (err) {
+            console.warn(err);
+        }
+        discover = null;
+    }
+}
+
+startDiscovery();

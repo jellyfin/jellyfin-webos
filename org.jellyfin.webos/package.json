@@ -1,0 +1,11 @@
+{
+  "name": "org.jellyfin.webos.service",
+  "version": "0.3.0",
+  "description": "Jellyfin Discovery Service",
+  "main": "jellyfin_service.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jellyfin contributors",
+  "license": "MPL-2.0"
+}
