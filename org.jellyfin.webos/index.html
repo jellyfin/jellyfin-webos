@@ -24,11 +24,14 @@
 		<div id="serverInfoForm">
 			<p id="error" style="display: none;">&nbsp;</p>
 			<form onsubmit="return false;">
-				<input type="url" id="baseurl" name="baseurl" placeholder="http://jellyfin.local:8096" tabindex="0" /><br>
-				<input type="checkbox" id="auto_connect" name="auto_connect"
-					onclick="return handleCheckbox(this, true);" onkeydown="return handleCheckbox(this, event);"
-					tabindex="1" value="1" />
-				<label for="auto_connect">Automatically connect on app launch.</label><br>
+				<input type="url" id="baseurl" name="baseurl" placeholder="http://jellyfin.local:8096" tabindex="0" />
+				<div class="checkbox-wrapper">
+					<input type="checkbox" id="auto_connect" name="auto_connect"
+						onclick="return handleCheckbox(this, true);"
+						onkeydown="return handleCheckbox(this, event);"
+						tabindex="1" value="1" />
+					<label for="auto_connect">Automatically connect on app launch.</label>
+				</div>
 				<button id="connect" type="button" onclick="return handleServerSelect();" tabindex="2">Connect</button>
 				<ul id="serverlist"></ul>
 			</form>
