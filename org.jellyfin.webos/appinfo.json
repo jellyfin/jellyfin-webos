@@ -5,7 +5,7 @@
     "bgImage": "assets/splash.png",
     "title": "Jellyfin",
     "type": "web",
-    "version": "0.3.0",
+    "version": "1.0.0",
     "splashBackground": "assets/splash.png",
     "bgColor": "#000b25",
     "vendor": "Jellyfin Project",
