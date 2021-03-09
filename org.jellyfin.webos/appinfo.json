@@ -1,6 +1,6 @@
 {
     "appDescription": "A webOS client to connect to a Jellyfin Server instance and stream media.",
-    "icon": "assets/icon-transparent80.png",
+    "icon": "assets/icon-80.png",
     "main": "index.html",
     "bgImage": "assets/splash.png",
     "title": "Jellyfin",
@@ -9,7 +9,7 @@
     "splashBackground": "assets/splash.png",
     "bgColor": "#000b25",
     "vendor": "Jellyfin Project",
-    "largeIcon": "assets/icon-transparent130.png",
+    "largeIcon": "assets/icon-130.png",
     "iconColor": "#000b25",
     "id": "org.jellyfin.webos",
     "disableBackHistoryAPI": true
