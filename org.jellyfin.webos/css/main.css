@@ -37,15 +37,18 @@ body {
     width: 100%;
     vertical-align: middle;
     color: #FFF;
-    display: -webkit-box;
-    display: flex;
-    -webkit-box-pack: center;
-    -webkit-box-orient: vertical;
-    flex-direction: column;
-    flex-wrap: flex-direction;
-    justify-content: center;
-    align-items: center;
-    align-content: center;
+    display:-webkit-flex;
+    display:flex;
+    -webkit-flex-direction: column;
+            flex-direction: column;
+    -webkit-flex-wrap: flex-direction;
+            flex-wrap: flex-direction;
+    -webkit-justify-content: center;
+            justify-content: center;
+    -webkit-align-items: center;
+            align-items: center;
+    -webkit-align-content: center;
+            align-content: center;
 }
 
 .container > div {
