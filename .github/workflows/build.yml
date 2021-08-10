@@ -34,7 +34,7 @@ jobs:
           args: >-
             ares-package
             --no-minify
-            --output build/
+            --outdir build/
             org.jellyfin.webos
 
       - name: Upload GitHub Release Artifacts
