@@ -27,10 +27,10 @@ Building is easy, and doesn't require anything besides the SDK:
 ```
 
 ## Testing
-Testing on a TV requires [registering a LG Developer](https://webostv.developer.lge.com/develop/app-test/preparing-account/), and [setting up the devmode app](https://webostv.developer.lge.com/develop/app-test/using-devmode-app/)
+Testing on a TV requires [registering a LG developer account](https://webostv.developer.lge.com/develop/app-test/preparing-account/) and [setting up the devmode app](https://webostv.developer.lge.com/develop/app-test/using-devmode-app/).
 
 Once you have installed the devmode app on your target TV and logged in with your LG developer account, you need to turn on the `Dev Mode Status` and `Key Server`.
-Take a note of the Passphrase.
+**Make sure** to take a note of the passphrase.
 
 ```sh
 # Add your TV. The defaults are fine, but I recommend naming it `tv`.

@@ -14,8 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - id: var
-        name: Prepare environment
+      - name: Prepare environment
         run: |
           rm -rf ./build/*
           mkdir ./build
