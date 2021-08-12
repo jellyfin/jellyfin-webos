@@ -15,7 +15,7 @@ Fill in your hostname, port and schema and click connect. The app will check for
 And then the app hands off control to the hosted webUI.
 
 # Developement
-Building the app with the webOS SDK can be done either via Docker or by [installing the webOS SDK](https://webostv.developer.lge.com/sdk/installation/download-installer/) directly.
+Building the app with the webOS SDK can be done either [via Docker](https://ghcr.io/oddstr13/docker-tizen-webos-sdk) or by [installing the webOS SDK](https://webostv.developer.lge.com/sdk/installation/download-installer/) directly.
 `dev.sh` is a wrapper around the Docker commands, if you have installed the SDK directly, just ommit that part.
 
 ## Building
