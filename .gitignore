@@ -19,3 +19,8 @@ local.properties
 OutputIPK/
 Thumbs.db
 *.ipk
+
+# Artifacts from setting Docker WORKDIR the same as HOME
+.ssh/
+.webos/
+.bash_history

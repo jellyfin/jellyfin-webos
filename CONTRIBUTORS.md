@@ -6,6 +6,7 @@
  - [Narfinger](https://github.com/Narfinger)
  - [JustAMan](https://github.com/JustAMan)
  - [dkanada](https://github.com/dkanada)
+ - [Oddstr13](https://github.com/oddstr13)
 
 # PlayZ Contributors
 
