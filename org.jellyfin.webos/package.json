@@ -5,10 +5,10 @@
   "main": "jellyfin_service.js",
   "scripts": {
     "check": "ares-package --check",
-    "package": "ares-package --no-minify --outdir build/ .",
+    "package": "ares-package -e \"node_modules\" -e \"yarn.lock\" --no-minify --outdir build/ .",
     "deploy": "ares-install build/org.jellyfin.webos_${npm_package_version}_all.ipk",
     "launch": "ares-launch org.jellyfin.webos",
-    "manifest": "node tools/gen-manifest.js org.jellyfin.webos.manifest.json && cp org.jellyfin.webos.manifest.json build/",
+    "manifest": "node tools/gen-manifest.js build/org.jellyfin.webos.manifest.json",
     "version": "node tools/sync-version.js && git add appinfo.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -28,4 +28,5 @@ Thumbs.db
 # NodeJS
 node_modules/
 org.jellyfin.webos/*.manifest.json
+org.jellyfin.webos/build/
 yarn.lock
