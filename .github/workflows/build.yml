@@ -14,27 +14,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+
       - name: Prepare environment
         run: |
+          cd org.jellyfin.webos
           rm -rf ./build/*
           mkdir ./build
 
+      - name: Install dependencies
+        run: yarn install
+
       - name: Check packaging
-        uses: docker://ghcr.io/oddstr13/docker-tizen-webos-sdk:webos-only
-        with:
-          args: >-
-            ares-package
-            --check
-            org.jellyfin.webos
+        run: yarn run check
 
       - name: Build package
-        uses: docker://ghcr.io/oddstr13/docker-tizen-webos-sdk:webos-only
+        run: yarn run package
+
+      - name: Create manifest for distribution
+        run: yarn run manifest
+
+      - name: Upload CI artifacts
+        uses: actions/upload-artifact@v2
         with:
-          args: >-
-            ares-package
-            --no-minify
-            --outdir build/
-            org.jellyfin.webos
+          name: jellyfin_webos
+          path: |
+            ${{github.workspace}}/org.jellyfin.webos/build/*
 
       - name: Upload GitHub Release Artifacts
         uses: shogo82148/actions-upload-release-asset@v1
