@@ -4,8 +4,15 @@
   "description": "Jellyfin Discovery Service",
   "main": "jellyfin_service.js",
   "scripts": {
+    "check": "ares-package --check",
+    "package": "ares-package --no-minify --outdir build/ .",
+    "deploy": "ares-install build/org.jellyfin.webos_${npm_package_version}_all.ipk",
+    "launch": "ares-launch org.jellyfin.webos",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jellyfin contributors",
-  "license": "MPL-2.0"
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "@webosose/ares-cli": "^2.1.0"
+  }
 }

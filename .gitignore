@@ -24,3 +24,8 @@ Thumbs.db
 .ssh/
 .webos/
 .bash_history
+
+# NodeJS
+node_modules/
+org.jellyfin.webos/*.manifest.json
+yarn.lock
