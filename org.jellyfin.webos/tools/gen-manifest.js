@@ -16,8 +16,8 @@ fs.writeFileSync(
     type: appinfo.type,
     title: appinfo.title,
     appDescription: appinfo.appDescription,
-    iconUri: 'https://github.com/tuxuser/jellyfin-webos/raw/master/org.jellyfin.webos/submission-icon.png',
-    sourceUrl: 'https://github.com/tuxuser/jellyfin-webos',
+    iconUri: 'https://github.com/jellyfin/jellyfin-webos/raw/master/org.jellyfin.webos/submission-icon.png',
+    sourceUrl: 'https://github.com/jellyfin/jellyfin-webos',
     rootRequired: true,
     ipkUrl: ipkfile,
     ipkHash: {
