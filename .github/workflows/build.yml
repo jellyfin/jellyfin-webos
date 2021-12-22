@@ -24,17 +24,17 @@ jobs:
           rm -rf ./build/*
           mkdir ./build
 
-      - name: Install dependencies
-        run: yarn install
+      - name: Install ares-cli globally
+        run: npm install -g @webosose/ares-cli
 
       - name: Check packaging
-        run: yarn run check
+        run: ares-package --check
 
       - name: Build package
-        run: yarn run package
+        run: ares-package --no-minify --outdir build/ services frontend
 
       - name: Create manifest for distribution
-        run: yarn run manifest
+        run: node tools/gen-manifest.js build/org.jellyfin.webos.manifest.json
 
       - name: Upload CI artifacts
         uses: actions/upload-artifact@v2
