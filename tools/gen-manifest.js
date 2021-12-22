@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 
 const outfile = process.argv[2];
-const appinfo = JSON.parse(fs.readFileSync('appinfo.json'));
+const appinfo = JSON.parse(fs.readFileSync('frontend/appinfo.json'));
 const ipkfile = `build/${appinfo.id}_${appinfo.version}_all.ipk`;
 const ipkhash = crypto.createHash('sha256').update(fs.readFileSync(ipkfile)).digest('hex');
 
