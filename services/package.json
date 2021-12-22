@@ -1,0 +1,4 @@
+{
+  "name": "org.jellyfin.webos.service",
+  "main": "service.js"
+}

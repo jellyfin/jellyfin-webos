@@ -2,7 +2,6 @@
   "name": "org.jellyfin.webos.service",
   "version": "1.0.0",
   "description": "Jellyfin Discovery Service",
-  "main": "jellyfin_service.js",
   "scripts": {
     "check": "ares-package --check",
     "package": "ares-package -e \"node_modules\" -e \"yarn.lock\" --no-minify --outdir build/ .",
