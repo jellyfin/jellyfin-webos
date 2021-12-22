@@ -4,7 +4,7 @@
   "description": "Jellyfin WebOS client",
   "scripts": {
     "check": "ares-package --check",
-    "package": "ares-package --outdir build/ services frontend",
+    "package": "ares-package --no-minify --outdir build/ services frontend",
     "clean": "rm -rf build/",
     "deploy": "ares-install build/org.jellyfin.webos_${npm_package_version}_all.ipk",
     "launch": "ares-launch org.jellyfin.webos",
