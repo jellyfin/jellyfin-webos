@@ -23,7 +23,7 @@ Building is easy, and doesn't require anything besides the SDK:
 
 ```sh
 # Build the package
-./dev.sh ares-package --no-minify org.jellyfin.webos
+./dev.sh ares-package --no-minify services frontend
 ```
 
 ## Testing
