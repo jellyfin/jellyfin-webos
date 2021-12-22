@@ -4,7 +4,8 @@
   "description": "Jellyfin Discovery Service",
   "scripts": {
     "check": "ares-package --check",
-    "package": "ares-package -e \"node_modules\" -e \"yarn.lock\" --no-minify --outdir build/ .",
+    "package": "ares-package --outdir build/ services frontend",
+    "clean": "rm -rf build/",
     "deploy": "ares-install build/org.jellyfin.webos_${npm_package_version}_all.ipk",
     "launch": "ares-launch org.jellyfin.webos",
     "manifest": "node tools/gen-manifest.js build/org.jellyfin.webos.manifest.json",
