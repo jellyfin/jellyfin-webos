@@ -24,3 +24,8 @@ Thumbs.db
 .ssh/
 .webos/
 .bash_history
+
+# NodeJS
+node_modules/
+build/
+yarn.lock
