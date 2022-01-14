@@ -175,7 +175,7 @@ function Init() {
 }
 // Just ensure that the string has no spaces, and begins with either http:// or https:// (case insensitively), and isn't empty after the ://
 function validURL(str) {
-    pattern = /^(http|https):\/\/[^ ]+$/i;
+    pattern = /^https?:\/\/\S+$/i;
     return !!pattern.test(str);
 }
 
