@@ -16,6 +16,11 @@ var appInfo = {
     appVersion: '0.0.0'
 };
 
+var deviceInfo;
+webOS.deviceInfo(function (info) {
+    deviceInfo = info;
+});
+
 //Adds .includes to string to do substring matching
 if (!String.prototype.includes) {
   String.prototype.includes = function(search, start) {
@@ -412,6 +417,7 @@ function handoff(url, bundle) {
         contentFrame.removeEventListener('load', onLoad);
 
         injectScriptText(contentFrame.contentDocument, 'window.AppInfo = ' + JSON.stringify(appInfo) + ';');
+        injectScriptText(contentFrame.contentDocument, 'window.DeviceInfo = ' + JSON.stringify(deviceInfo) + ';');
 
         if (bundle.js) {
             injectScriptText(contentFrame.contentDocument, bundle.js);

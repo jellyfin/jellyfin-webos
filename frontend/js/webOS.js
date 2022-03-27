@@ -5,7 +5,7 @@
  *
 */
 
-(function(AppInfo) {
+(function(AppInfo, deviceInfo) {
     'use strict';
 
     console.log('WebOS adapter');
@@ -127,4 +127,4 @@
             postMessage('hideMediaSession');
         }
     };
-})(window.AppInfo);
+})(window.AppInfo, window.DeviceInfo);
