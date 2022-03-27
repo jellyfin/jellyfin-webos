@@ -73,7 +73,14 @@
 
             getDeviceProfile: function (profileBuilder) {
                 postMessage('AppHost.getDeviceProfile');
-                return profileBuilder({ enableMkvProgressive: false, enableSsaRender: true });
+                return profileBuilder({
+                    enableMkvProgressive: false,
+                    enableSsaRender: true,
+                    supportsDolbyAtmos: deviceInfo ? deviceInfo.dolbyAtmos : null,
+                    supportsDolbyVision: deviceInfo ? deviceInfo.dolbyVision : null,
+                    supportsHdr10: deviceInfo ? deviceInfo.hdr10 : null,
+                    supportsTrueHd: deviceInfo ? deviceInfo.dolbyAtmos : null
+                });
             },
 
             getSyncProfile: function (profileBuilder) {
