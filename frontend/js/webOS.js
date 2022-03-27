@@ -88,6 +88,13 @@
                     isSupported: isSupported
                 });
                 return isSupported;
+            },
+
+            screen: function () {
+                return deviceInfo ? {
+                    width: deviceInfo.screenWidth,
+                    height: deviceInfo.screenHeight
+                } : null;
             }
         },
 
