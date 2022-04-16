@@ -148,6 +148,7 @@ input[type=checkbox]:focus {
 .server_card {
     display: block;
     flex-grow: 1;
+    flex-basis: 0;
     text-align: center;
     margin: 0.3em;
 }
@@ -156,4 +157,6 @@ input[type=checkbox]:focus {
     color: gray;
     font-size: 0.7em;
     margin: 0.3em auto;
+    overflow : hidden;
+    text-overflow: ellipsis;
 }
