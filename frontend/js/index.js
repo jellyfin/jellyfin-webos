@@ -177,6 +177,7 @@ function Init() {
                 handleServerSelect();
             }
         }
+        renderServerList(connected_servers);
     }
 }
 // Just ensure that the string has no spaces, and begins with either http:// or https:// (case insensitively), and isn't empty after the ://
@@ -524,15 +525,9 @@ window.addEventListener('message', function (msg) {
 var discovered_servers = {};
 var connected_servers = {};
 
-function renderServerList() {
-
-
-    for (let server_id in connected_servers) {
-        let server = connected_servers[server_id];
-        renderSingleServer(server_id, server);
-    }
-    for (var server_id in discovered_servers) {
-        var server = discovered_servers[server_id];
+function renderServerList(server_list) {
+    for (var server_id in server_list) {
+        var server = server_list[server_id];
         renderSingleServer(server_id, server);
     }
 }
@@ -595,7 +590,7 @@ function verifyThenAdd(server) {
                 server.system_info_public = data;
                 if (!discovered_servers[server.Id]) {
                     discovered_servers[server.Id] = server;
-                    renderServerList();
+                    renderServerList(discovered_servers);
                 }
             }
             servers_verifying[server.Id] = true;
