@@ -166,7 +166,7 @@ function Init() {
 
     if (storage.exists('connected_servers')) {
         connected_servers = storage.get('connected_servers')
-        let first_server = connected_servers[Object.keys(connected_servers)[0]]
+        var first_server = connected_servers[Object.keys(connected_servers)[0]]
         document.querySelector('#baseurl').value = first_server.baseurl;
         document.querySelector('#auto_connect').checked = first_server.auto_connect;
         if (window.performance && window.performance.navigation.type == window.performance.navigation.TYPE_BACK_FORWARD) {
@@ -275,9 +275,11 @@ function getManifest(baseurl) {
 function handleSuccessServerInfo(data, baseurl, auto_connect) {
     curr_req = false;
 
-    connected_servers = storage.get('connected_servers')
-    for (let server_id in connected_servers) {
-        let server = connected_servers[server_id]
+    if (storage.exists('connected_servers')) {
+        connected_servers = storage.get('connected_servers')
+    }
+    for (var server_id in connected_servers) {
+        var server = connected_servers[server_id]
         if (server.baseurl == baseurl) {
             if (server.id != data.Id && server.id !== false) {
                 //server has changed warn user.
@@ -302,14 +304,14 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
 }
 
 function lruStrategy(old_items,max_items,new_item) {
-    let result = {}
-    let id = new_item.id
+    var result = {}
+    var id = new_item.id
 
     delete old_items[id] // LRU: re-insert entry (in front) each time it is used
     result[id] =  new_item
-    let keys = Object.keys(old_items)
-    for (let i=0; i<max_items-2; i++){
-        let current_key=keys[i]
+    var keys = Object.keys(old_items)
+    for (var i=0; i<max_items-2; i++){
+        var current_key=keys[i]
         result[current_key] = old_items[current_key]
     }
     return result
@@ -324,8 +326,8 @@ function handleSuccessManifest(data, baseurl) {
 
     curr_req = false;
 
-    for (let server_id in connected_servers) {
-        let info = connected_servers[server_id]
+    for (var server_id in connected_servers) {
+        var info = connected_servers[server_id]
         if (info['baseurl' ] == baseurl) {
             info['hosturl'] = hosturl
             info['Address'] = info['Address'] || baseurl
