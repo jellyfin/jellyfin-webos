@@ -35,6 +35,23 @@
         'multiserver'
     ];
 
+    if (deviceInfo) {
+        var devicePixelRatio = 1;
+
+        if (deviceInfo.uhd8K){
+            console.log("8K UHD is supported");
+            devicePixelRatio = 4;
+        } else if (deviceInfo.uhd){
+            console.log("4K UHD is supported");
+            devicePixelRatio = 2;
+        } else {
+            console.log("UHD is not supported");
+        }
+
+        deviceInfo.screenWidth = Math.floor(deviceInfo.screenWidth * devicePixelRatio);
+        deviceInfo.screenHeight = Math.floor(deviceInfo.screenHeight * devicePixelRatio);
+    }
+
     window.NativeShell = {
         AppHost: {
             init: function () {
