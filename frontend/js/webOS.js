@@ -5,7 +5,7 @@
  *
 */
 
-(function(AppInfo) {
+(function(AppInfo, deviceInfo) {
     'use strict';
 
     console.log('WebOS adapter');
@@ -73,7 +73,14 @@
 
             getDeviceProfile: function (profileBuilder) {
                 postMessage('AppHost.getDeviceProfile');
-                return profileBuilder({ enableMkvProgressive: false, enableSsaRender: true });
+                return profileBuilder({
+                    enableMkvProgressive: false,
+                    enableSsaRender: true,
+                    supportsDolbyAtmos: deviceInfo ? deviceInfo.dolbyAtmos : null,
+                    supportsDolbyVision: deviceInfo ? deviceInfo.dolbyVision : null,
+                    supportsHdr10: deviceInfo ? deviceInfo.hdr10 : null,
+                    supportsTrueHd: deviceInfo ? deviceInfo.dolbyAtmos : null
+                });
             },
 
             getSyncProfile: function (profileBuilder) {
@@ -88,6 +95,13 @@
                     isSupported: isSupported
                 });
                 return isSupported;
+            },
+
+            screen: function () {
+                return deviceInfo ? {
+                    width: deviceInfo.screenWidth,
+                    height: deviceInfo.screenHeight
+                } : null;
             }
         },
 
@@ -127,4 +141,4 @@
             postMessage('hideMediaSession');
         }
     };
-})(window.AppInfo);
+})(window.AppInfo, window.DeviceInfo);
