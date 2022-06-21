@@ -63,20 +63,29 @@ AJAX.prototype.request = function(url, settings) {
 	}
 	
 	xhr.onreadystatechange = function () {
-		if (xhr.readyState == 4) {
+		if (xhr.readyState == XMLHttpRequest.DONE) {
 			if (xhr.status == 200) {
                 if (settings.success) {
-                    settings.success(JSON.parse(xhr.responseText));
+					try {
+                    	settings.success(JSON.parse(xhr.responseText));
+					} catch (error) {
+						console.error(error);
+						if (error instanceof SyntaxError) {
+							if (settings.error) {
+								settings.error({error: "The server did not return valid JSON data."});
+							}
+						} else if (settings.error) {
+							settings.error({error: 0});
+						}
+					}
                 }
-            } else if (xhr.status == 204){
+            } else if (xhr.status == 204) {
                 if (settings.success) {                
                     settings.success({success: true})
                 }
             } else if (settings.error) {
-                if (settings.error) {  
-                    settings.error({error: true});
-                }
-            }
+                settings.error({error: true});
+			}
         }
 	}
 	

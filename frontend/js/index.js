@@ -329,7 +329,9 @@ function handleFailure(data) {
         displayError("The request timed out.")
     } else if (data.error == 'abort') {
         displayError("The request was aborted.")
-    } else if (isNaN(data.error)) {
+    } else if (typeof data.error === 'string') {
+        displayError(data.error);
+    } else if (isNaN(data.error + "")) {
         displayError("Got HTTP error " + data.error.toString() + " from server, are you connecting to a Jellyfin Server?")
     } else {
         displayError("Unknown error occured, are you connecting to a Jellyfin Server?")
