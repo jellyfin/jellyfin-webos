@@ -84,7 +84,7 @@ AJAX.prototype.request = function(url, settings) {
                     settings.success({success: true})
                 }
             } else if (settings.error) {
-                settings.error({error: true});
+                settings.error({error: xhr.status});
 			}
         }
 	}
