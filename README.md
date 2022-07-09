@@ -1,11 +1,28 @@
 
-# Jellyfin WebOS client
+# Jellyfin for webOS
 This is a small wrapper around the web interface that the server provides (https://github.com/jellyfin/jellyfin-web) so most of the developement happens there.
 
-# LICENSE
+
+## Download
+
+For webOS 2/3/4/5:
+* Download the [latest release](https://github.com/jellyfin/jellyfin-webos/releases/latest)
+* Install using Developer Mode (or other process)
+
+For newer TVs (2021+):
+<p align="center">
+<a href="https://us.lgappstv.com/main/tvapp/detail?appId=1030579"><img alt="Enjoy on LG Smart TV" src="https://repo.jellyfin.org/releases/other/lg-badge/LG_BADGE_greyborders_135x40.png"/></a>
+<br/>
+<em><strong>Note:</strong>  The Content Store version is currently only available for webOS 6+.</em>
+</p>
+
+
+## License
 All Jellyfin webOS code is licensed under the MPL 2.0 license, some parts incorporate content licensed under the Apache 2.0 license. All images are taken from and licensed under the same license as https://github.com/jellyfin/jellyfin-ux.
 
-# Development
+---
+
+## Development
 
 The general development workflow looks like this:
 
@@ -19,15 +36,15 @@ There are three ways of creating the required build environment:
 - Docker
 - NPM ares-cli
 
-## Full WebOS SDK Installation
+### Full WebOS SDK Installation
 
 - Install the WebOS SDK from http://webostv.developer.lge.com/sdk/installation/
 
-## Docker
+### Docker
 
 A prebuilt docker image is available that includes the build and deployment dependencies, see [Docker Hub](https://ghcr.io/oddstr13/docker-tizen-webos-sdk).
 
-## Managing the ares-tools via npm
+### Managing the ares-tools via npm
 
 This requires `npm`, the Node.js package manager.
 
@@ -50,7 +67,7 @@ Now you can package the app by running
 ares-package --no-minify services frontend
 ```
 
-# Usage
+## Usage
 Fill in your hostname, port and schema and click connect. The app will check for a server by grabbing the manifest and the public serverinfo.
 And then the app hands off control to the hosted webUI.
 
