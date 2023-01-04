@@ -78,8 +78,7 @@
                     enableSsaRender: true,
                     supportsDolbyAtmos: deviceInfo ? deviceInfo.dolbyAtmos : null,
                     supportsDolbyVision: deviceInfo ? deviceInfo.dolbyVision : null,
-                    supportsHdr10: deviceInfo ? deviceInfo.hdr10 : null,
-                    supportsTrueHd: deviceInfo ? deviceInfo.dolbyAtmos : null
+                    supportsHdr10: deviceInfo ? deviceInfo.hdr10 : null
                 });
             },
 
