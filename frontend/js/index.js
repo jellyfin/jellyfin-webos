@@ -286,6 +286,17 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
     }
 
     storage.set('connected_server', { 'baseurl': baseurl, 'auto_connect': auto_connect, 'id': data.Id })
+    
+    // Store server info locally for easy switching between servers
+    if (!storage.exists('existing_servers')) {
+        storage.set('existing_servers', {})
+    }
+
+    if (!storage.get('existing_servers').hasOwnProperty(baseurl)) {
+        var existing_servers = storage.get('existing_servers');
+        existing_servers[baseurl] = { 'Name': data.ServerName, 'id': data.Id, 'Id': data.Id, 'Address': baseurl }
+        storage.set('existing_servers', existing_servers);
+    }
 
     getManifest(baseurl)
 }
@@ -590,6 +601,18 @@ function startDiscovery() {
             console.log('ERR:', JSON.stringify(args));
         }
     });
+
+    // Additionally check for existing servers stored in local storage (used previously)
+    if (storage.exists('existing_servers')) {
+        var existing_servers = storage.get('existing_servers');
+        
+        Object.keys(existing_servers).forEach((serveraddress) => {
+            var server = existing_servers[serveraddress];
+            discovered_servers[server.id] = server;
+        });
+        
+        renderServerList();
+    }
 }
 
 function stopDiscovery() {
