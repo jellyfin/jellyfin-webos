@@ -272,14 +272,21 @@ function getManifest(baseurl) {
     });
 }
 
+function getConnectedServers() {
+    connected_servers = storage.get('connected_servers');
+    if (!connected_servers) {
+        connected_servers = {};
+    }
+    return connected_servers;
+}
+
+
 function handleSuccessServerInfo(data, baseurl, auto_connect) {
     curr_req = false;
 
-    if (storage.exists('connected_servers')) {
-        connected_servers = storage.get('connected_servers')
-    }
-    for (var server_id in connected_servers) {
-        var server = connected_servers[server_id]
+    connected_servers = getConnectedServers();
+    for (let server_id in connected_servers) {
+        let server = connected_servers[server_id]
         if (server.baseurl == baseurl) {
             if (server.id != data.Id && server.id !== false) {
                 //server has changed warn user.
