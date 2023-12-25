@@ -150,13 +150,15 @@ input[type=checkbox]:focus {
     flex-grow: 1;
     flex-basis: 0;
     text-align: center;
+    width: 33%;
     margin: 0.3em;
 }
-
+server_card_url
 .server_card_version, .server_card_url {
     color: gray;
     font-size: 0.7em;
     margin: 0.3em auto;
+    width: 90%;
     overflow : hidden;
     text-overflow: ellipsis;
 }

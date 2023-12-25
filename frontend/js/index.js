@@ -301,7 +301,7 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
     }
 
 
-    connected_servers = lruStrategy(connected_servers,3, { 'baseurl': baseurl, 'auto_connect': auto_connect, 'id': data.Id, 'Name':data.ServerName })
+    connected_servers = lruStrategy(connected_servers,4, { 'baseurl': baseurl, 'auto_connect': auto_connect, 'id': data.Id, 'Name':data.ServerName })
 
     storage.set('connected_servers', connected_servers);
 
@@ -317,7 +317,7 @@ function lruStrategy(old_items,max_items,new_item) {
     delete old_items[id] // LRU: re-insert entry (in front) each time it is used
     result[id] =  new_item
     var keys = Object.keys(old_items)
-    for (var i=0; i<max_items-2; i++){
+    for (var i=0; i<max_items-1; i++){
         var current_key=keys[i]
         result[current_key] = old_items[current_key]
     }
