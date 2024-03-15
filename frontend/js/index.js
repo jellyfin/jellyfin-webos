@@ -164,18 +164,20 @@ function Init() {
 
     navigationInit();
 
-    if (storage.exists('connected_server')) {
-        data = storage.get('connected_server')
-        document.querySelector('#baseurl').value = data.baseurl;
-        document.querySelector('#auto_connect').checked = data.auto_connect;
+    if (storage.exists('connected_servers')) {
+        connected_servers = storage.get('connected_servers')
+        var first_server = connected_servers[Object.keys(connected_servers)[0]]
+        document.querySelector('#baseurl').value = first_server.baseurl;
+        document.querySelector('#auto_connect').checked = first_server.auto_connect;
         if (window.performance && window.performance.navigation.type == window.performance.navigation.TYPE_BACK_FORWARD) {
             console.log('Got here using the browser "Back" or "Forward" button, inhibiting auto connect.');
         } else {
-            if (data.auto_connect) {
+            if (first_server.auto_connect) {
                 console.log("Auto connecting...");
                 handleServerSelect();
             }
         }
+        renderServerList(connected_servers);
     }
 }
 // Just ensure that the string has no spaces, and begins with either http:// or https:// (case insensitively), and isn't empty after the ://
@@ -270,24 +272,56 @@ function getManifest(baseurl) {
     });
 }
 
+function getConnectedServers() {
+    connected_servers = storage.get('connected_servers');
+    if (!connected_servers) {
+        connected_servers = {};
+    }
+    return connected_servers;
+}
+
+
 function handleSuccessServerInfo(data, baseurl, auto_connect) {
     curr_req = false;
-    if (storage.exists('connected_server')) {
-        info = storage.get('connected_server')
-        if (info.baseurl == baseurl) {
-            if (info.id != data.Id && info.id !== false) {
+
+    connected_servers = getConnectedServers();
+    for (let server_id in connected_servers) {
+        let server = connected_servers[server_id]
+        if (server.baseurl == baseurl) {
+            if (server.id != data.Id && server.id !== false) {
                 //server has changed warn user.
                 hideConnecting();
                 displayError("The server ID has changed since the last connection, please check if you are reaching your own server. To connect anyway, click connect again.");
-                storage.set('connected_server', { 'baseurl': baseurl, 'auto_connect': false, 'id': false })
+                delete connected_servers[server_id]
+                connected_servers[data.Id] = ({ 'baseurl': baseurl, 'auto_connect': false, 'id': false })
+                storage.set('connected_server', connected_servers)
                 return false
             }
         }
     }
 
-    storage.set('connected_server', { 'baseurl': baseurl, 'auto_connect': auto_connect, 'id': data.Id })
+
+    connected_servers = lruStrategy(connected_servers,4, { 'baseurl': baseurl, 'auto_connect': auto_connect, 'id': data.Id, 'Name':data.ServerName })
+
+    storage.set('connected_servers', connected_servers);
+
 
     getManifest(baseurl)
+    return true;
+}
+
+function lruStrategy(old_items,max_items,new_item) {
+    var result = {}
+    var id = new_item.id
+
+    delete old_items[id] // LRU: re-insert entry (in front) each time it is used
+    result[id] =  new_item
+    var keys = Object.keys(old_items)
+    for (var i=0; i<max_items-1; i++){
+        var current_key=keys[i]
+        result[current_key] = old_items[current_key]
+    }
+    return result
 }
 
 function handleSuccessManifest(data, baseurl) {
@@ -299,21 +333,38 @@ function handleSuccessManifest(data, baseurl) {
 
     curr_req = false;
 
-    info = storage.get('connected_server')
-    info['hosturl'] = hosturl
-    info['baseurl'] = baseurl
-    storage.set('connected_server', info)
-    console.log(info);
+    for (var server_id in connected_servers) {
+        var info = connected_servers[server_id]
+        if (info['baseurl' ] == baseurl) {
+            info['hosturl'] = hosturl
+            info['Address'] = info['Address'] || baseurl
 
-    // avoid Promise as it's buggy in some WebOS
-    getTextToInject(function (bundle) {
-        handoff(hosturl, bundle);
-    }, function (error) {
-        console.error(error);
-        displayError(error);
-        hideConnecting();
-        curr_req = false;
-    });
+            storage.set('connected_servers', connected_servers)
+            console.log("martin:handleSuccessManifest modified server");
+            console.log(info);
+
+        // avoid Promise as it's buggy in some WebOS
+            getTextToInject(function (bundle) {
+                handoff(hosturl, bundle);
+            }, function (error) {
+                console.error(error);
+                displayError(error);
+                hideConnecting();
+                curr_req = false;
+            });
+            return;
+        }
+    }
+    //no id, unshoft generates unique(?) index
+    connected_servers.unshift({
+        'baseurl': baseurl,
+        'hosturl': hosturl,
+        'Name': data.shortname,
+        'Address': new URL(baseurl).hostname.slice(0,8),
+    })
+    storage.set('connected_server', servers)
+    console.log("martin:handleSuccessManifest added server");
+    console.log(info);
 }
 
 function handleAbort() {
@@ -481,46 +532,50 @@ window.addEventListener('message', function (msg) {
 /* Server auto-discovery */
 
 var discovered_servers = {};
+var connected_servers = {};
 
-function renderServerList() {
-    var server_list = document.getElementById("serverlist");
-    for (var server_id in discovered_servers) {
-        var server = discovered_servers[server_id];
-
-        var server_card = document.getElementById("server_" + server.Id);
-
-        if (!server_card) {
-            server_card = document.createElement("li");
-            server_card.id = "server_" + server_id;
-            server_card.className = "server_card";
-            server_list.appendChild(server_card);
-        }
-        server_card.innerHTML = "";
-
-        // Server name
-        var title = document.createElement("div");
-        title.className = "server_card_title";
-        title.innerText = server.Name;
-        server_card.appendChild(title);
-
-        // Server URL
-        var server_url = document.createElement("div");
-        server_url.className = "server_card_url";
-        server_url.innerText = server.Address;
-        server_card.appendChild(server_url);
-
-        // Button
-        var btn = document.createElement("button");
-        btn.innerText = "Connect";
-        btn.type = "button";
-        btn.value = server.Address;
-        btn.onclick = function() {
-            var urlfield = document.getElementById("baseurl");
-            urlfield.value = this.value;
-            handleServerSelect();
-        }
-        server_card.appendChild(btn);
+function renderServerList(server_list) {
+    for (var server_id in server_list) {
+        var server = server_list[server_id];
+        renderSingleServer(server_id, server);
     }
+}
+
+function renderSingleServer(server_id, server) {
+    var server_list = document.getElementById("serverlist");
+    var server_card = document.getElementById("server_" + server.Id);
+
+    if (!server_card) {
+        server_card = document.createElement("li");
+        server_card.id = "server_" + server_id;
+        server_card.className = "server_card";
+        server_list.appendChild(server_card);
+    }
+    server_card.innerHTML = "";
+
+    // Server name
+    var title = document.createElement("div");
+    title.className = "server_card_title";
+    title.innerText = server.Name;
+    server_card.appendChild(title);
+
+    // Server URL
+    var server_url = document.createElement("div");
+    server_url.className = "server_card_url";
+    server_url.innerText = server.Address;
+    server_card.appendChild(server_url);
+
+    // Button
+    var btn = document.createElement("button");
+    btn.innerText = "Connect";
+    btn.type = "button";
+    btn.value = server.Address;
+    btn.onclick = function () {
+        var urlfield = document.getElementById("baseurl");
+        urlfield.value = this.value;
+        handleServerSelect();
+    };
+    server_card.appendChild(btn);
 }
 
 
@@ -544,7 +599,7 @@ function verifyThenAdd(server) {
                 server.system_info_public = data;
                 if (!discovered_servers[server.Id]) {
                     discovered_servers[server.Id] = server;
-                    renderServerList();
+                    renderServerList(discovered_servers);
                 }
             }
             servers_verifying[server.Id] = true;
