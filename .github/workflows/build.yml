@@ -37,7 +37,7 @@ jobs:
         run: node tools/gen-manifest.js build/org.jellyfin.webos.manifest.json
 
       - name: Upload CI artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jellyfin_webos
           path: |
