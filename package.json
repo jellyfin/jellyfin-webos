@@ -15,6 +15,6 @@
   "author": "Jellyfin contributors",
   "license": "MPL-2.0",
   "devDependencies": {
-    "@webosose/ares-cli": "^2.1.0"
+    "@webosose/ares-cli": "^2.4.0"
   }
 }
