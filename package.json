@@ -1,6 +1,6 @@
 {
   "name": "org.jellyfin.webos",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "description": "Jellyfin WebOS client",
   "scripts": {
     "check": "ares-package --check",
@@ -15,6 +15,6 @@
   "author": "Jellyfin contributors",
   "license": "MPL-2.0",
   "devDependencies": {
-    "@webosose/ares-cli": "^2.1.0"
+    "@webosose/ares-cli": "^2.4.0"
   }
 }
