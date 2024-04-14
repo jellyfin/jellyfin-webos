@@ -19,6 +19,33 @@ var appInfo = {
 var deviceInfo;
 webOS.deviceInfo(function (info) {
     deviceInfo = info;
+
+    webOS.service.request('luna://com.webos.service.config', {
+        method: 'getConfigs',
+        parameters: {
+            configNames: ['tv.model.edidType']
+        },
+        onSuccess: function (result) {
+            console.debug(result);
+
+            result.configs = result.configs || {};
+
+            var edidType = (result.configs['tv.model.edidType'] || '').toLowerCase();
+
+            if (edidType.indexOf('dts') !== -1) {
+                console.log('DTS support: yes');
+                deviceInfo.supportsDts = true;
+            }
+
+            if (edidType.indexOf('truehd') !== -1) {
+                console.log('TrueHd support: yes');
+                deviceInfo.supportsTrueHd = true;
+            }
+        },
+        onFailure: function (e) {
+            console.error(e);
+        }
+    });
 });
 
 //Adds .includes to string to do substring matching
