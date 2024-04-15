@@ -285,8 +285,8 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
     curr_req = false;
 
     connected_servers = getConnectedServers();
-    for (let server_id in connected_servers) {
-        let server = connected_servers[server_id]
+    for (var server_id in connected_servers) {
+        var server = connected_servers[server_id]
         if (server.baseurl == baseurl) {
             if (server.id != data.Id && server.id !== false) {
                 //server has changed warn user.
