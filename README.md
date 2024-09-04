@@ -1,6 +1,6 @@
 
 # Jellyfin for webOS
-This is a small wrapper around the web interface that the server provides (https://github.com/jellyfin/jellyfin-web) so most of the developement happens there.
+This is a small wrapper around the web interface provided by the server (https://github.com/jellyfin/jellyfin-web) so most of the development happens there.
 
 
 ## Download
@@ -26,7 +26,7 @@ The general development workflow looks like this:
 - Compile an IPK either with the IDE or with ares-package
 - Test the app on the emulator or ares-server or install it on your tv by following http://webostv.developer.lge.com/develop/app-test/
 
-There are three ways of creating the required build environment:
+There are three ways to create the required build environment:
 
 - Full WebOS SDK Installation
 - Docker
@@ -48,13 +48,13 @@ Execute the following to install the required WebOS toolkit for building & deplo
 
 `npm install`
 
-Now you can package the app by running
+Now you can package the app by running:
 
 `npm run package`
 
 ## Building with Docker or WebOS SDK
 
-`dev.sh` is a wrapper around the Docker commands, if you have installed the SDK directly, just ommit that part.
+`dev.sh` is a wrapper around the Docker commands. If you have installed the SDK directly, just omit that part.
 
 ```sh
 # Build the package via Docker
@@ -64,8 +64,8 @@ ares-package --no-minify services frontend
 ```
 
 ## Usage
-Fill in your hostname, port and schema and click connect. The app will check for a server by grabbing the manifest and the public serverinfo.
-And then the app hands off control to the hosted webUI.
+Fill in your hostname, port, and schema and click connect. The app will check for a server by grabbing the manifest and the public serverinfo.
+Afterwards, the app hands off control to the hosted webUI.
 
 
 ## Testing
