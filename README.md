@@ -18,6 +18,13 @@ All Jellyfin webOS code is licensed under the MPL 2.0 license, some parts incorp
 
 ---
 
+## Deeplinks
+App supports opening specific URL when opening via Luna API, for example:
+```sh
+luna-send -n 1 luna://com.webos.applicationManager/launch '{"id":"org.jellyfin.webos","params":{"url":
+"/details?id=<CONTENT_ID>&serverId=<SERVER_ID>"}}'
+```
+
 ## Development
 
 The general development workflow looks like this:

@@ -21,6 +21,20 @@ webOS.deviceInfo(function (info) {
     deviceInfo = info;
 });
 
+
+var launchParams;
+document.addEventListener("webOSLaunch", function (data) {
+    launchParams = data.detail;
+    console.log("Launch: " + JSON.stringify(data.detail));
+});
+document.addEventListener("webOSRelaunch", function (data) {
+    launchParams = data.detail;
+    console.log("Relaunch: " + JSON.stringify(data.detail));
+    if(launchParams.url){
+        Init() // reinit if relaunched with arguments
+    }
+});
+
 //Adds .includes to string to do substring matching
 if (!String.prototype.includes) {
   String.prototype.includes = function(search, start) {
@@ -330,6 +344,11 @@ function handleSuccessManifest(data, baseurl) {
     } else {
         var hosturl = normalizeUrl(baseurl + "/web/" + data.start_url);
     }
+    if (launchParams.url) {
+        const start_url = hosturl.split("#", 1);
+        hosturl = start_url + "#" + launchParams.url;
+    }
+
 
     curr_req = false;
 
