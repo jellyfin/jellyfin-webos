@@ -166,6 +166,8 @@ function Init() {
 
     if (storage.exists('connected_servers')) {
         connected_servers = storage.get('connected_servers')
+        renderServerList(connected_servers);
+
         var first_server = connected_servers[Object.keys(connected_servers)[0]]
         document.querySelector('#baseurl').value = first_server.baseurl;
         document.querySelector('#auto_connect').checked = first_server.auto_connect;
@@ -177,7 +179,7 @@ function Init() {
                 handleServerSelect();
             }
         }
-        renderServerList(connected_servers);
+        
     }
 }
 // Just ensure that the string has no spaces, and begins with either http:// or https:// (case insensitively), and isn't empty after the ://
@@ -294,7 +296,7 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
                 displayError("The server ID has changed since the last connection, please check if you are reaching your own server. To connect anyway, click connect again.");
                 delete connected_servers[server_id]
                 connected_servers[data.Id] = ({ 'baseurl': baseurl, 'auto_connect': false, 'id': false })
-                storage.set('connected_server', connected_servers)
+                storage.set('connected_servers', connected_servers)
                 return false
             }
         }
@@ -325,13 +327,17 @@ function lruStrategy(old_items,max_items,new_item) {
 }
 
 function handleSuccessManifest(data, baseurl) {
+    var hosturl;
     if(data.start_url.includes("/web")){
-        var hosturl = normalizeUrl(baseurl + "/" + data.start_url);
+        hosturl = normalizeUrl(baseurl + "/" + data.start_url);
     } else {
-        var hosturl = normalizeUrl(baseurl + "/web/" + data.start_url);
+        hosturl = normalizeUrl(baseurl + "/web/" + data.start_url);
     }
 
     curr_req = false;
+
+    // Ensure we work against the persisted server list.
+    connected_servers = getConnectedServers();
 
     for (var server_id in connected_servers) {
         var info = connected_servers[server_id]
@@ -355,16 +361,29 @@ function handleSuccessManifest(data, baseurl) {
             return;
         }
     }
-    //no id, unshoft generates unique(?) index
-    connected_servers.unshift({
+
+    // Fallback: if the server wasn't in the list (unexpected), add it keyed by URL.
+    // (We don't have a stable server Id from manifest.json alone.)
+    var fallback_key = 'url:' + baseurl;
+    connected_servers[fallback_key] = ({
         'baseurl': baseurl,
         'hosturl': hosturl,
-        'Name': data.shortname,
-        'Address': new URL(baseurl).hostname.slice(0,8),
-    })
-    storage.set('connected_server', servers)
-    console.log("martin:handleSuccessManifest added server");
-    console.log(info);
+        'auto_connect': false,
+        'id': false,
+        'Name': data.shortname || baseurl,
+        'Address': baseurl
+    });
+    storage.set('connected_servers', connected_servers);
+
+    // Continue with normal flow.
+    getTextToInject(function (bundle) {
+        handoff(hosturl, bundle);
+    }, function (error) {
+        console.error(error);
+        displayError(error);
+        hideConnecting();
+        curr_req = false;
+    });
 }
 
 function handleAbort() {
@@ -389,7 +408,6 @@ function handleFailure(data) {
     }
 
     hideConnecting();
-    storage.remove('connected_server');
     curr_req = false;
 }
 
