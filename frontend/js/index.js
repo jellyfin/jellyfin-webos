@@ -165,8 +165,7 @@ function Init() {
     navigationInit();
 
     if (storage.exists('connected_servers')) {
-        connected_servers = storage.get('connected_servers')
-        renderServerList(connected_servers);
+        var connected_servers = storage.get('connected_servers');
 
         var first_server = connected_servers[Object.keys(connected_servers)[0]]
         document.querySelector('#baseurl').value = first_server.baseurl;
@@ -179,7 +178,7 @@ function Init() {
                 handleServerSelect();
             }
         }
-        
+        renderServerList(connected_servers);
     }
 }
 // Just ensure that the string has no spaces, and begins with either http:// or https:// (case insensitively), and isn't empty after the ://
@@ -275,7 +274,7 @@ function getManifest(baseurl) {
 }
 
 function getConnectedServers() {
-    connected_servers = storage.get('connected_servers');
+    var connected_servers = storage.get('connected_servers');
     if (!connected_servers) {
         connected_servers = {};
     }
@@ -286,7 +285,7 @@ function getConnectedServers() {
 function handleSuccessServerInfo(data, baseurl, auto_connect) {
     curr_req = false;
 
-    connected_servers = getConnectedServers();
+    var connected_servers = getConnectedServers();
     for (var server_id in connected_servers) {
         var server = connected_servers[server_id]
         if (server.baseurl == baseurl) {
@@ -336,8 +335,7 @@ function handleSuccessManifest(data, baseurl) {
 
     curr_req = false;
 
-    // Ensure we work against the persisted server list.
-    connected_servers = getConnectedServers();
+    var connected_servers = getConnectedServers();
 
     for (var server_id in connected_servers) {
         var info = connected_servers[server_id]
@@ -550,7 +548,6 @@ window.addEventListener('message', function (msg) {
 /* Server auto-discovery */
 
 var discovered_servers = {};
-var connected_servers = {};
 
 function renderServerList(server_list) {
     for (var server_id in server_list) {
