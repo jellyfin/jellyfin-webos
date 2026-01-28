@@ -164,9 +164,8 @@ function Init() {
 
     navigationInit();
 
-    if (storage.exists('connected_servers')) {
-        var connected_servers = storage.get('connected_servers');
-
+    var connected_servers = getConnectedServers();
+    if (Object.keys(connected_servers).length > 0) {
         var first_server = connected_servers[Object.keys(connected_servers)[0]]
         document.querySelector('#baseurl').value = first_server.baseurl;
         document.querySelector('#auto_connect').checked = first_server.auto_connect;
@@ -274,11 +273,11 @@ function getManifest(baseurl) {
 }
 
 function getConnectedServers() {
-    var connected_servers = storage.get('connected_servers');
-    if (!connected_servers) {
-        connected_servers = {};
-    }
-    return connected_servers;
+    return storage.get('connected_servers') || {};
+}
+
+function setConnectedServers(servers) {
+    storage.set('connected_servers', servers);
 }
 
 
@@ -295,7 +294,7 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
                 displayError("The server ID has changed since the last connection, please check if you are reaching your own server. To connect anyway, click connect again.");
                 delete connected_servers[server_id]
                 connected_servers[data.Id] = ({ 'baseurl': baseurl, 'auto_connect': false, 'id': false })
-                storage.set('connected_servers', connected_servers)
+                setConnectedServers(connected_servers)
                 return false
             }
         }
@@ -304,7 +303,7 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
 
     connected_servers = lruStrategy(connected_servers,4, { 'baseurl': baseurl, 'auto_connect': auto_connect, 'id': data.Id, 'Name':data.ServerName })
 
-    storage.set('connected_servers', connected_servers);
+    setConnectedServers(connected_servers);
 
 
     getManifest(baseurl)
@@ -343,7 +342,7 @@ function handleSuccessManifest(data, baseurl) {
             info['hosturl'] = hosturl
             info['Address'] = info['Address'] || baseurl
 
-            storage.set('connected_servers', connected_servers)
+            setConnectedServers(connected_servers)
             console.log("martin:handleSuccessManifest modified server");
             console.log(info);
 
@@ -371,7 +370,7 @@ function handleSuccessManifest(data, baseurl) {
         'Name': data.shortname || baseurl,
         'Address': baseurl
     });
-    storage.set('connected_servers', connected_servers);
+    setConnectedServers(connected_servers);
 
     // Continue with normal flow.
     getTextToInject(function (bundle) {
