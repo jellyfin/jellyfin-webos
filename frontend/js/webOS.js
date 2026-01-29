@@ -21,8 +21,18 @@
 
     /**
      * Detect codec support using HTMLMediaElement.canPlayType()
-     * This method works across all webOS versions.
-     * Returns object with detected capabilities.
+     * This method works across all webOS versions (Chrome 38+).
+     *
+     * We only detect codecs that:
+     * 1. Jellyfin's profile builder can't reliably detect (HEVC with various codec strings)
+     * 2. Are hardware-dependent and may not report correctly via canPlayType (DTS, TrueHD)
+     * 3. Are needed to determine audio channel capabilities (AC3, EAC3 for 5.1)
+     *
+     * We do NOT detect these codecs because Jellyfin's profile builder already
+     * detects them reliably using canPlayType():
+     * - H.264/AVC (universally supported, Jellyfin assumes available)
+     * - VP8, VP9, AV1 (detected by Jellyfin's canPlayVp8/canPlayVp9/canPlayAv1)
+     * - AAC, MP3, Opus, Vorbis, FLAC (detected by Jellyfin internally)
      */
     function detectCodecSupport() {
         var video = document.createElement('video');
@@ -34,206 +44,56 @@
             return result === 'probably' || result === 'maybe';
         }
 
-        // Video codec detection
+        // HEVC detection - test multiple codec strings because some devices
+        // only recognize specific formats (hvc1 vs hev1, different levels)
         var videoCodecs = {
-            // H.264/AVC - Multiple profiles
-            h264: canPlay(video, 'video/mp4;codecs="avc1.42001e"') ||  // Baseline
-                  canPlay(video, 'video/mp4;codecs="avc1.4d001f"') ||  // Main
-                  canPlay(video, 'video/mp4;codecs="avc1.640028"'),    // High
-
-            // H.265/HEVC - Main and Main10 profiles
             hevc: canPlay(video, 'video/mp4;codecs="hvc1.1.6.L93.B0"') ||
                   canPlay(video, 'video/mp4;codecs="hvc1.1.6.L120.B0"') ||
                   canPlay(video, 'video/mp4;codecs="hvc1.1.6.L150.B0"') ||
                   canPlay(video, 'video/mp4;codecs="hvc1.1.6.L153.B0"') ||
-                  canPlay(video, 'video/mp4;codecs="hvc1.1.6.L156.B0"') ||
-                  canPlay(video, 'video/mp4;codecs="hvc1.1.6.L180.B0"') ||
-                  canPlay(video, 'video/mp4;codecs="hvc1.1.6.L186.B0"') ||
                   canPlay(video, 'video/mp4;codecs="hev1.1.6.L93.B0"') ||
                   canPlay(video, 'video/mp4;codecs="hev1.1.6.L120.B0"') ||
                   canPlay(video, 'video/mp4;codecs="hev1.1.6.L150.B0"') ||
-                  canPlay(video, 'video/mp4;codecs="hev1.1.6.L153.B0"') ||
-                  canPlay(video, 'video/mp4;codecs="hev1.1.6.L156.B0"') ||
-                  canPlay(video, 'video/mp4;codecs="hev1.1.6.L180.B0"') ||
-                  canPlay(video, 'video/mp4;codecs="hev1.1.6.L186.B0"'),
+                  canPlay(video, 'video/mp4;codecs="hev1.1.6.L153.B0"'),
 
-            // HEVC Main10 (for HDR content)
+            // HEVC Main10 profile (required for HDR content)
             hevcMain10: canPlay(video, 'video/mp4;codecs="hvc1.2.4.L153.B0"') ||
-                        canPlay(video, 'video/mp4;codecs="hev1.2.4.L153.B0"'),
-
-            // VP8
-            vp8: canPlay(video, 'video/webm;codecs="vp8"'),
-
-            // VP9 - Profile 0 and Profile 2 (HDR)
-            vp9: canPlay(video, 'video/webm;codecs="vp9"') ||
-                 canPlay(video, 'video/webm;codecs="vp09.00.10.08"'),
-
-            vp9Profile2: canPlay(video, 'video/webm;codecs="vp09.02.10.10"'),
-
-            // AV1
-            av1: canPlay(video, 'video/mp4;codecs="av01.0.00M.08"') ||
-                 canPlay(video, 'video/mp4;codecs="av01.0.05M.08"') ||
-                 canPlay(video, 'video/mp4;codecs="av01.0.12M.08"') ||
-                 canPlay(video, 'video/mp4;codecs="av01.0.15M.10"') ||
-                 canPlay(video, 'video/webm;codecs="av01.0.05M.08"'),
-
-            // MPEG-2
-            mpeg2: canPlay(video, 'video/mp2t;codecs="mp2v"') ||
-                   canPlay(video, 'video/mpeg'),
-
-            // VC-1 (rarely supported in browsers)
-            vc1: canPlay(video, 'video/mp4;codecs="vc-1"') ||
-                 canPlay(video, 'video/ogg;codecs="vc-1"')
+                        canPlay(video, 'video/mp4;codecs="hev1.2.4.L153.B0"')
         };
 
-        // Audio codec detection
+        // Audio codecs - focus on hardware-dependent codecs and surround sound
         var audioCodecs = {
-            // AAC variants
-            aac: canPlay(audio, 'audio/mp4;codecs="mp4a.40.2"'),      // AAC-LC
-            aacHe: canPlay(audio, 'audio/mp4;codecs="mp4a.40.5"'),    // HE-AAC
-            aacHev2: canPlay(audio, 'audio/mp4;codecs="mp4a.40.29"'), // HE-AAC v2
-
-            // Dolby Digital (AC-3)
+            // Dolby Digital (AC-3) - needed for 5.1 channel detection
             ac3: canPlay(audio, 'audio/mp4;codecs="ac-3"') ||
                  canPlay(video, 'video/mp4;codecs="avc1.640028,ac-3"'),
 
-            // Dolby Digital Plus (E-AC-3)
+            // Dolby Digital Plus (E-AC-3) - needed for 5.1/7.1 channel detection
             eac3: canPlay(audio, 'audio/mp4;codecs="ec-3"') ||
                   canPlay(video, 'video/mp4;codecs="avc1.640028,ec-3"'),
 
-            // Dolby TrueHD (rarely supported via HTML5)
+            // Dolby TrueHD - hardware dependent, canPlayType may not detect reliably
             trueHd: canPlay(audio, 'audio/mp4;codecs="mlpa"') ||
                     canPlay(audio, 'audio/truehd'),
 
-            // DTS variants
+            // DTS - hardware dependent, often requires specific decoder support
             dts: canPlay(audio, 'audio/mp4;codecs="dtsc"') ||
                  canPlay(audio, 'audio/mp4;codecs="dtsh"') ||
                  canPlay(audio, 'audio/mp4;codecs="dtse"') ||
                  canPlay(audio, 'audio/vnd.dts'),
 
+            // DTS-HD - high-quality DTS variant
             dtsHd: canPlay(audio, 'audio/mp4;codecs="dtsh"') ||
                    canPlay(audio, 'audio/vnd.dts.hd'),
 
-            // MP3
+            // MP3 - needed for supportsMp2VideoAudio flag
             mp3: canPlay(audio, 'audio/mpeg') ||
-                 canPlay(audio, 'audio/mp3'),
-
-            // Opus
-            opus: canPlay(audio, 'audio/ogg;codecs="opus"') ||
-                  canPlay(audio, 'audio/webm;codecs="opus"') ||
-                  canPlay(audio, 'audio/mp4;codecs="opus"'),
-
-            // Vorbis
-            vorbis: canPlay(audio, 'audio/ogg;codecs="vorbis"') ||
-                    canPlay(audio, 'audio/webm;codecs="vorbis"'),
-
-            // FLAC
-            flac: canPlay(audio, 'audio/flac') ||
-                  canPlay(audio, 'audio/ogg;codecs="flac"') ||
-                  canPlay(audio, 'audio/mp4;codecs="flac"'),
-
-            // ALAC (Apple Lossless)
-            alac: canPlay(audio, 'audio/mp4;codecs="alac"'),
-
-            // PCM/WAV
-            pcm: canPlay(audio, 'audio/wav') ||
-                 canPlay(audio, 'audio/wave')
-        };
-
-        // Container format detection
-        var containers = {
-            mp4: canPlay(video, 'video/mp4'),
-            webm: canPlay(video, 'video/webm'),
-            mkv: canPlay(video, 'video/x-matroska') ||
-                 canPlay(video, 'video/webm'), // MKV often works if WebM does
-            hls: canPlay(video, 'application/vnd.apple.mpegurl') ||
-                 canPlay(video, 'application/x-mpegURL'),
-            ts: canPlay(video, 'video/mp2t'),
-            avi: canPlay(video, 'video/x-msvideo'),
-            ogg: canPlay(video, 'video/ogg')
+                 canPlay(audio, 'audio/mp3')
         };
 
         return {
             video: videoCodecs,
-            audio: audioCodecs,
-            containers: containers
+            audio: audioCodecs
         };
-    }
-
-    /**
-     * Advanced codec detection using MediaCapabilities API (Chrome 66+)
-     * Provides more accurate results including smooth/power-efficient info.
-     * Falls back to canPlayType if MediaCapabilities is not available.
-     */
-    function detectCodecSupportAdvanced(callback) {
-        // Check if MediaCapabilities API is available
-        if (!('mediaCapabilities' in navigator)) {
-            console.log('MediaCapabilities API not available, using canPlayType fallback');
-            callback(null);
-            return;
-        }
-
-        var tests = [
-            // HEVC 4K
-            { name: 'hevc4k', config: {
-                type: 'file',
-                video: { contentType: 'video/mp4;codecs="hvc1.1.6.L150.B0"',
-                         width: 3840, height: 2160, bitrate: 20000000, framerate: 30 }
-            }},
-            // HEVC 4K60
-            { name: 'hevc4k60', config: {
-                type: 'file',
-                video: { contentType: 'video/mp4;codecs="hvc1.1.6.L153.B0"',
-                         width: 3840, height: 2160, bitrate: 40000000, framerate: 60 }
-            }},
-            // HEVC 1080p
-            { name: 'hevc1080p', config: {
-                type: 'file',
-                video: { contentType: 'video/mp4;codecs="hvc1.1.6.L120.B0"',
-                         width: 1920, height: 1080, bitrate: 10000000, framerate: 30 }
-            }},
-            // VP9 4K
-            { name: 'vp94k', config: {
-                type: 'file',
-                video: { contentType: 'video/webm;codecs="vp09.00.50.08"',
-                         width: 3840, height: 2160, bitrate: 20000000, framerate: 30 }
-            }},
-            // AV1 4K
-            { name: 'av14k', config: {
-                type: 'file',
-                video: { contentType: 'video/mp4;codecs="av01.0.12M.08"',
-                         width: 3840, height: 2160, bitrate: 20000000, framerate: 30 }
-            }},
-            // H.264 4K (rare but some TVs support it)
-            { name: 'h2644k', config: {
-                type: 'file',
-                video: { contentType: 'video/mp4;codecs="avc1.640033"',
-                         width: 3840, height: 2160, bitrate: 40000000, framerate: 30 }
-            }}
-        ];
-
-        var results = {};
-        var completed = 0;
-
-        tests.forEach(function(test) {
-            navigator.mediaCapabilities.decodingInfo(test.config)
-                .then(function(result) {
-                    results[test.name] = {
-                        supported: result.supported,
-                        smooth: result.smooth,
-                        powerEfficient: result.powerEfficient
-                    };
-                })
-                .catch(function() {
-                    results[test.name] = { supported: false, smooth: false, powerEfficient: false };
-                })
-                .finally(function() {
-                    completed++;
-                    if (completed === tests.length) {
-                        callback(results);
-                    }
-                });
-        });
     }
 
     /**
@@ -357,6 +217,10 @@
                 var maxChannels = getMaxAudioChannels(codecSupport);
 
                 // Build comprehensive device profile
+                // Note: Video codecs like VP9, AV1, H.264 are detected by Jellyfin's
+                // profile builder internally using canPlayType(), so we don't need
+                // to report them explicitly. We only report capabilities that
+                // Jellyfin can't detect on its own (HEVC, HDR, Atmos, DTS, etc.)
                 var profile = {
                     // Container/streaming options
                     enableMkvProgressive: false,
@@ -365,15 +229,15 @@
                     // Subtitle support
                     enableSsaRender: true,
 
-                    // HDR support (from webOS deviceInfo)
+                    // HDR support (from webOS deviceInfo - not detectable via canPlayType)
                     supportsHdr10: deviceInfo ? !!deviceInfo.hdr10 : false,
                     supportsDolbyVision: deviceInfo ? !!deviceInfo.dolbyVision : false,
-                    supportsHlg: deviceInfo ? !!deviceInfo.hdr10 : false, // HLG typically available with HDR10
+                    supportsHlg: deviceInfo ? !!deviceInfo.hlg : false,
 
-                    // Video codec support (dynamically detected)
+                    // HEVC support (Jellyfin's detection may miss some codec strings)
                     supportsHevc: codecSupport.video.hevc || codecSupport.video.hevcMain10,
 
-                    // Audio support
+                    // Audio support (from deviceInfo and codec detection)
                     supportsDolbyAtmos: deviceInfo ? !!deviceInfo.dolbyAtmos : false,
                     supportsTrueHd: codecSupport.audio.trueHd ||
                                     (codecSupport.audio.eac3 && deviceInfo && deviceInfo.dolbyAtmos),
