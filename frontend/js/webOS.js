@@ -16,61 +16,6 @@
         }, '*');
     }
 
-    /**
-     * Detect audio codec support for codecs that jellyfin-web
-     * doesn't auto-detect reliably on webOS.
-     */
-    function detectAudioCodecs() {
-        var audio = document.createElement('audio');
-
-        function canPlay(type) {
-            var result = audio.canPlayType(type);
-            return result === 'probably' || result === 'maybe';
-        }
-
-        return {
-            // DTS - hardware dependent, jellyfin-web may not detect on older webOS
-            dts: canPlay('audio/mp4; codecs="dtsc"') ||
-                 canPlay('audio/mp4; codecs="dtsh"') ||
-                 canPlay('audio/vnd.dts'),
-
-            // TrueHD - not auto-detected by jellyfin-web
-            trueHd: canPlay('audio/mp4; codecs="mlpa"') ||
-                    canPlay('audio/truehd'),
-
-            // AC3/EAC3 - for determining surround sound capability
-            ac3: canPlay('audio/mp4; codecs="ac-3"'),
-            eac3: canPlay('audio/mp4; codecs="ec-3"')
-        };
-    }
-
-    /**
-     * Determine maximum video width from deviceInfo
-     */
-    function getMaxVideoWidth() {
-        if (deviceInfo) {
-            if (deviceInfo.uhd8K) return 7680;
-            if (deviceInfo.uhd) return 3840;
-            if (deviceInfo.screenWidth >= 3840) return 3840;
-        }
-        return 1920; // Default to 1080p
-    }
-
-    /**
-     * Determine maximum audio channels based on device capabilities
-     */
-    function getMaxAudioChannels(audioCodecs) {
-        // Dolby Atmos supports up to 7.1.4
-        if (deviceInfo && deviceInfo.dolbyAtmos) {
-            return 8;
-        }
-        // AC3/EAC3 means 5.1 support
-        if (audioCodecs.eac3 || audioCodecs.ac3) {
-            return 6;
-        }
-        return 2; // Stereo
-    }
-
     // List of supported features
     var SupportedFeatures = [
         'exit',
@@ -128,29 +73,13 @@
             getDeviceProfile: function (profileBuilder) {
                 postMessage('AppHost.getDeviceProfile');
 
-                // Detect audio codecs that jellyfin-web doesn't auto-detect
-                var audioCodecs = detectAudioCodecs();
-
-                var profile = {
+                return profileBuilder({
                     enableMkvProgressive: false,
                     enableSsaRender: true,
-
-                    // Dolby Vision - webOS defaults to false, need deviceInfo
-                    supportsDolbyVision: deviceInfo && deviceInfo.dolbyVision ? true : undefined,
-
-                    // DTS - helps older webOS where auto-detect may fail
-                    supportsDts: audioCodecs.dts ? true : undefined,
-
-                    // TrueHD - not auto-detected by jellyfin-web
-                    supportsTrueHd: audioCodecs.trueHd ? true : undefined,
-
-                    // Resolution and channels - helps server make decisions
-                    maxVideoWidth: getMaxVideoWidth(),
-                    audioChannels: getMaxAudioChannels(audioCodecs)
-                };
-
-                console.log('Device profile:', JSON.stringify(profile, null, 2));
-                return profileBuilder(profile);
+                    supportsDolbyAtmos: deviceInfo ? deviceInfo.dolbyAtmos : null,
+                    supportsDolbyVision: deviceInfo ? deviceInfo.dolbyVision : null,
+                    supportsHdr10: deviceInfo ? deviceInfo.hdr10 : null
+                });
             },
 
             getSyncProfile: function (profileBuilder) {
