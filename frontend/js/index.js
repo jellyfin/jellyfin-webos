@@ -17,9 +17,22 @@ var appInfo = {
 };
 
 var deviceInfo;
+var deviceInfoCallback;
 webOS.deviceInfo(function (info) {
     deviceInfo = info;
+    if (deviceInfoCallback) {
+        deviceInfoCallback(info);
+        deviceInfoCallback = null;
+    }
 });
+
+function waitForDeviceInfo(callback) {
+    if (deviceInfo) {
+        callback(deviceInfo);
+    } else {
+        deviceInfoCallback = callback;
+    }
+}
 
 //Adds .includes to string to do substring matching
 if (!String.prototype.includes) {
@@ -506,8 +519,12 @@ function handoff(url, bundle) {
     // In the case of "loading" and "interactive" are not caught
     contentFrame.addEventListener('load', onLoad);
 
-    contentFrame.style.display = '';
-    contentFrame.src = url;
+    // Ensure deviceInfo is available before loading the iframe.
+    // webOS.deviceInfo() is an async Luna service call that may not have completed yet.
+    waitForDeviceInfo(function () {
+        contentFrame.style.display = '';
+        contentFrame.src = url;
+    });
 }
 
 window.addEventListener('message', function (msg) {
