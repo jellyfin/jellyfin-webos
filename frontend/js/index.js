@@ -508,6 +508,7 @@ function handoff(url, bundle) {
 
     contentFrame.style.display = '';
     contentFrame.src = url;
+    contentFrame.focus();
 }
 
 window.addEventListener('message', function (msg) {
