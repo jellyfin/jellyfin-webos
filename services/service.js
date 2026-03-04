@@ -76,7 +76,7 @@ function handleDiscoveryResponse(message, remote) {
 }
 
 function sendJellyfinDiscovery() {
-	var msg = new Buffer(JELLYFIN_DISCOVERY_MESSAGE);
+	var msg = Buffer.from(JELLYFIN_DISCOVERY_MESSAGE);
 	client4.send(msg, 0, msg.length, 7359, "255.255.255.255");
 
 	// if (client6) {
