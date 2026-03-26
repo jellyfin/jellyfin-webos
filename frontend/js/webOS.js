@@ -5,10 +5,22 @@
  *
 */
 
-(function(AppInfo, deviceInfo) {
+(function(AppInfo, rawDeviceInfo) {
     'use strict';
 
     console.log('WebOS adapter');
+
+    var deviceInfo = rawDeviceInfo ? Object.assign({}, rawDeviceInfo) : {};
+
+    if (!deviceInfo.hdr10 && deviceInfo.oled) {
+        console.debug('WebOS adapter: inferring HDR10 support from OLED display');
+        deviceInfo.hdr10 = true;
+    }
+
+    if (!deviceInfo.dolbyVision && deviceInfo.oled) {
+        console.debug('WebOS adapter: inferring Dolby Vision support from OLED display');
+        deviceInfo.dolbyVision = true;
+    }
 
     function postMessage(type, data) {
         window.top.postMessage({
@@ -76,9 +88,9 @@
                 return profileBuilder({
                     enableMkvProgressive: false,
                     enableSsaRender: true,
-                    supportsDolbyAtmos: deviceInfo ? deviceInfo.dolbyAtmos : null,
-                    supportsDolbyVision: deviceInfo ? deviceInfo.dolbyVision : null,
-                    supportsHdr10: deviceInfo ? deviceInfo.hdr10 : null
+                    supportsDolbyAtmos: deviceInfo.dolbyAtmos ?? null,
+                    supportsDolbyVision: deviceInfo.dolbyVision ?? null,
+                    supportsHdr10: deviceInfo.hdr10 ?? null
                 });
             },
 
@@ -97,10 +109,13 @@
             },
 
             screen: function () {
-                return deviceInfo ? {
-                    width: deviceInfo.screenWidth,
-                    height: deviceInfo.screenHeight
-                } : null;
+                if (deviceInfo.screenWidth && deviceInfo.screenHeight) {
+                    return {
+                        width: deviceInfo.screenWidth,
+                        height: deviceInfo.screenHeight
+                    };
+                }
+                return null;
             }
         },
 
