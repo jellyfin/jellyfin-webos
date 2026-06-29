@@ -8,6 +8,7 @@
 var curr_req = false;
 var server_info = false;
 var manifest = false;
+var server_mismatch_pending = false;
 
 var appInfo = {
     deviceId: null,
@@ -39,6 +40,19 @@ function isVisible(element) {
     return element.offsetWidth > 0 && element.offsetHeight > 0;
 }
 
+function getFocusableElements() {
+    var elements = document.querySelectorAll('input, button, a, area, object, select, textarea, [contenteditable]');
+    var focusableElements = [];
+
+    for (var i = 0, item; item = elements[i]; i++) {
+        if (isVisible(item)) {
+            focusableElements.push(item);
+        }
+    }
+
+    return focusableElements;
+}
+
 function findIndex(array, currentNode) {
     //This just implements the following function which is not available on some LG TVs
     //Array.from(allElements).findIndex(function (el) { return currentNode.isEqualNode(el); })
@@ -59,8 +73,8 @@ function navigate(amount) {
         //Isolate the node that we're after
         const currentNode = element;
 
-        //find all tab-able elements
-        const allElements = document.querySelectorAll('input, button, a, area, object, select, textarea, [contenteditable]');
+        //find all visible tab-able elements
+        const allElements = getFocusableElements();
 
         //Find the current tab index.
         const currentIndex = findIndex(allElements, currentNode);
@@ -77,6 +91,11 @@ function upArrowPressed() {
 }
 
 function downArrowPressed() {
+    if (server_mismatch_pending) {
+        focusConnectButton();
+        return;
+    }
+
     navigate(1);
 }
 function leftArrowPressed() {
@@ -89,6 +108,13 @@ function rightArrowPressed() {
 
 function backPressed() {
     webOS.platformBack();
+}
+
+function okPressed() {
+    if (server_mismatch_pending) {
+        focusConnectButton();
+        handleServerSelect();
+    }
 }
 
 document.onkeydown = function (evt) {
@@ -105,6 +131,10 @@ document.onkeydown = function (evt) {
             break;
         case 40:
             downArrowPressed();
+            break;
+        case 13:
+        case 32:
+            okPressed();
             break;
         case 461: // Back
             backPressed();
@@ -212,6 +242,7 @@ function handleServerSelect() {
 
     if (validURL(baseurl)) {
 
+        server_mismatch_pending = false;
         displayConnecting();
         console.log(baseurl, auto_connect);
 
@@ -232,7 +263,17 @@ function displayError(error) {
     errorElem.style.display = '';
     errorElem.innerHTML = error;
 }
+
+function focusConnectButton() {
+    var connect = document.querySelector('#connect');
+
+    if (connect && isVisible(connect)) {
+        connect.focus();
+    }
+}
+
 function hideError() {
+    server_mismatch_pending = false;
     var errorElem = document.querySelector('#error')
     errorElem.style.display = 'none';
     errorElem.innerHTML = '&nbsp;';
@@ -291,10 +332,12 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
             if (server.id != data.Id && server.id !== false) {
                 //server has changed warn user.
                 hideConnecting();
+                server_mismatch_pending = true;
                 displayError("The server ID has changed since the last connection, please check if you are reaching your own server. To connect anyway, click connect again.");
+                setTimeout(focusConnectButton, 0);
                 delete connected_servers[server_id]
                 connected_servers[data.Id] = ({ 'baseurl': baseurl, 'auto_connect': false, 'id': false })
-                storage.set('connected_server', connected_servers)
+                storage.set('connected_servers', connected_servers)
                 return false
             }
         }
