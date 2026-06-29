@@ -8,6 +8,7 @@
 var curr_req = false;
 var server_info = false;
 var manifest = false;
+var server_mismatch_pending = false;
 
 var appInfo = {
     deviceId: null,
@@ -104,7 +105,18 @@ document.onkeydown = function (evt) {
             upArrowPressed();
             break;
         case 40:
+            if (server_mismatch_pending) {
+                navigationInit();
+                return false;
+            }
             downArrowPressed();
+            break;
+        case 13:
+        case 32:
+            if (server_mismatch_pending) {
+                handleServerSelect();
+                return false;
+            }
             break;
         case 461: // Back
             backPressed();
@@ -232,7 +244,9 @@ function displayError(error) {
     errorElem.style.display = '';
     errorElem.innerHTML = error;
 }
+
 function hideError() {
+    server_mismatch_pending = false;
     var errorElem = document.querySelector('#error')
     errorElem.style.display = 'none';
     errorElem.innerHTML = '&nbsp;';
@@ -291,6 +305,7 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
             if (server.id != data.Id && server.id !== false) {
                 //server has changed warn user.
                 hideConnecting();
+                server_mismatch_pending = true;
                 displayError("The server ID has changed since the last connection, please check if you are reaching your own server. To connect anyway, click connect again.");
                 delete connected_servers[server_id]
                 connected_servers[data.Id] = ({ 'baseurl': baseurl, 'auto_connect': false, 'id': false })
