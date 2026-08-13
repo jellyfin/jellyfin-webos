@@ -43,7 +43,7 @@ function findIndex(array, currentNode) {
     //This just implements the following function which is not available on some LG TVs
     //Array.from(allElements).findIndex(function (el) { return currentNode.isEqualNode(el); })
     for (var i = 0, item; item = array[i]; i++) {
-        if (currentNode.isEqualNode(item))
+        if (item === currentNode)
             return i;
     }
 }
@@ -187,7 +187,7 @@ function validURL(str) {
 }
 
 function normalizeUrl(url) {
-    url = url.trimLeft ? url.trimLeft() : url.trimStart();
+    url = url.trim ? url.trim() : url;
     if (url.indexOf("http://") != 0 && url.indexOf("https://") != 0) {
         // assume http
         url = "http://" + url;
@@ -294,7 +294,7 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
                 displayError("The server ID has changed since the last connection, please check if you are reaching your own server. To connect anyway, click connect again.");
                 delete connected_servers[server_id]
                 connected_servers[data.Id] = ({ 'baseurl': baseurl, 'auto_connect': false, 'id': false })
-                storage.set('connected_server', connected_servers)
+                storage.set('connected_servers', connected_servers)
                 return false
             }
         }
@@ -317,7 +317,7 @@ function lruStrategy(old_items,max_items,new_item) {
     delete old_items[id] // LRU: re-insert entry (in front) each time it is used
     result[id] =  new_item
     var keys = Object.keys(old_items)
-    for (var i=0; i<max_items-1; i++){
+    for (var i=0; i<max_items-1 && i<keys.length; i++){
         var current_key=keys[i]
         result[current_key] = old_items[current_key]
     }
@@ -325,6 +325,12 @@ function lruStrategy(old_items,max_items,new_item) {
 }
 
 function handleSuccessManifest(data, baseurl) {
+    if (typeof data.start_url !== 'string') {
+        curr_req = false;
+        handleFailure({ error: "The server did not return a usable web manifest. Are you connecting to a Jellyfin Server?" });
+        return;
+    }
+
     if(data.start_url.includes("/web")){
         var hosturl = normalizeUrl(baseurl + "/" + data.start_url);
     } else {
@@ -340,8 +346,6 @@ function handleSuccessManifest(data, baseurl) {
             info['Address'] = info['Address'] || baseurl
 
             storage.set('connected_servers', connected_servers)
-            console.log("martin:handleSuccessManifest modified server");
-            console.log(info);
 
         // avoid Promise as it's buggy in some WebOS
             getTextToInject(function (bundle) {
@@ -355,16 +359,15 @@ function handleSuccessManifest(data, baseurl) {
             return;
         }
     }
-    //no id, unshoft generates unique(?) index
-    connected_servers.unshift({
+    //no matching entry found, add a new one keyed by the baseurl
+    connected_servers[baseurl] = {
         'baseurl': baseurl,
         'hosturl': hosturl,
-        'Name': data.shortname,
-        'Address': new URL(baseurl).hostname.slice(0,8),
-    })
-    storage.set('connected_server', servers)
-    console.log("martin:handleSuccessManifest added server");
-    console.log(info);
+        'Name': data.short_name,
+        'Address': new URL(baseurl).hostname.slice(0,8)
+    };
+    storage.set('connected_servers', connected_servers)
+    console.log("handleSuccessManifest added server");
 }
 
 function handleAbort() {
@@ -389,7 +392,6 @@ function handleFailure(data) {
     }
 
     hideConnecting();
-    storage.remove('connected_server');
     curr_req = false;
 }
 
@@ -543,7 +545,7 @@ function renderServerList(server_list) {
 
 function renderSingleServer(server_id, server) {
     var server_list = document.getElementById("serverlist");
-    var server_card = document.getElementById("server_" + server.Id);
+    var server_card = document.getElementById("server_" + server_id);
 
     if (!server_card) {
         server_card = document.createElement("li");
@@ -599,7 +601,7 @@ function verifyThenAdd(server) {
                 server.system_info_public = data;
                 if (!discovered_servers[server.Id]) {
                     discovered_servers[server.Id] = server;
-                    renderServerList(discovered_servers);
+                    renderSingleServer(server.Id, server);
                 }
             }
             servers_verifying[server.Id] = true;
@@ -630,7 +632,7 @@ function startDiscovery() {
     discover = webOS.service.request("luna://org.jellyfin.webos.service", {
         method: "discover",
         parameters: {
-            uniqueToken: 'fooo'
+            uniqueToken: Date.now().toString(36) + '-' + Math.random().toString(36).slice(2)
         },
         subscribe: true,
         resubscribe: true,
