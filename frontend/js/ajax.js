@@ -66,18 +66,17 @@ AJAX.prototype.request = function(url, settings) {
 		if (xhr.readyState == XMLHttpRequest.DONE) {
 			if (xhr.status == 200) {
                 if (settings.success) {
+					var parsedResponse;
 					try {
-                    	settings.success(JSON.parse(xhr.responseText));
+						parsedResponse = JSON.parse(xhr.responseText);
 					} catch (error) {
 						console.error(error);
-						if (error instanceof SyntaxError) {
-							if (settings.error) {
-								settings.error({error: "The server did not return valid JSON data."});
-							}
-						} else if (settings.error) {
-							settings.error({error: 0});
+						if (settings.error) {
+							settings.error({error: "The server did not return valid JSON data."});
 						}
+						return;
 					}
+					settings.success(parsedResponse);
                 }
             } else if (xhr.status == 204) {
                 if (settings.success) {                
