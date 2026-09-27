@@ -526,6 +526,18 @@ window.addEventListener('message', function (msg) {
         case 'AppHost.exit':
             webOS.platformBack();
             break;
+        case 'launchYouTube':
+            webOS.service.request('luna://com.webos.applicationManager', {
+                method: 'launch',
+                parameters: {
+                    id: 'youtube.leanback.v4',
+                    params: { contentTarget: 'https://www.youtube.com/tv?v=' + msg.data.videoId }
+                },
+                onFailure: function (err) {
+                    console.error('Failed to launch YouTube app', err);
+                }
+            });
+            break;
     }
 });
 
