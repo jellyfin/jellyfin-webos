@@ -165,7 +165,7 @@ function Init() {
     navigationInit();
 
     var connected_servers = getConnectedServers();
-    var [first_server] = Object.values(connected_servers);
+    var first_server = connected_servers[Object.keys(connected_servers)[0]];
     if (first_server) {
         document.querySelector('#baseurl').value = first_server.baseurl;
         document.querySelector('#auto_connect').checked = first_server.auto_connect;
