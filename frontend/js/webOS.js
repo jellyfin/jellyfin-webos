@@ -35,6 +35,90 @@
         'multiserver'
     ];
 
+    // YouTube's embedded player rejects playback inside this app (error 153,
+    // "video player configuration error"), so hand YouTube URLs to the TV's
+    // YouTube app instead. Registered via getPlugins(); plugin players take
+    // priority over jellyfin-web's built-in youtubeplayer.
+    function getYouTubeVideoId(url) {
+        var match = /(?:[?&]v=|youtu\.be\/|\/embed\/|\/shorts\/)([\w-]{11})/.exec(url || '');
+        return match ? match[1] : null;
+    }
+
+    function YouTubeAppPlayer(deps) {
+        this.name = 'YouTube App Player';
+        this.type = 'mediaplayer';
+        this.id = 'youtubeappplayer';
+        this.priority = 0;
+        this.isLocalPlayer = true;
+        this._events = deps.events;
+        this._playbackManager = deps.playbackManager;
+        this._currentSrc = null;
+    }
+
+    YouTubeAppPlayer.prototype.canPlayMediaType = function (mediaType) {
+        mediaType = (mediaType || '').toLowerCase();
+        return mediaType === 'audio' || mediaType === 'video';
+    };
+
+    YouTubeAppPlayer.prototype.canPlayItem = function () {
+        // Does not play server items
+        return false;
+    };
+
+    YouTubeAppPlayer.prototype.canPlayUrl = function (url) {
+        return !!getYouTubeVideoId(url) && /youtube\.com|youtu\.be/i.test(url);
+    };
+
+    YouTubeAppPlayer.prototype.play = function (options) {
+        var self = this;
+        var videoId = getYouTubeVideoId(options.url);
+
+        if (!videoId) {
+            return Promise.reject('ErrorDefault');
+        }
+
+        self._currentSrc = options.url;
+        postMessage('launchYouTube', { videoId: videoId });
+
+        // Playback happens in another app: end this "session" right away and
+        // stop the queue so the next trailer doesn't relaunch YouTube.
+        setTimeout(function () {
+            self._playbackManager.stop(self);
+        }, 500);
+
+        return Promise.resolve();
+    };
+
+    YouTubeAppPlayer.prototype.stop = function () {
+        if (this._currentSrc) {
+            var stopInfo = { src: this._currentSrc };
+            this._currentSrc = null;
+            this._events.trigger(this, 'stopped', [stopInfo]);
+        }
+        return Promise.resolve();
+    };
+
+    YouTubeAppPlayer.prototype.destroy = function () {};
+    YouTubeAppPlayer.prototype.getDeviceProfile = function () { return Promise.resolve({}); };
+    YouTubeAppPlayer.prototype.currentSrc = function () { return this._currentSrc; };
+    YouTubeAppPlayer.prototype.setSubtitleStreamIndex = function () {};
+    YouTubeAppPlayer.prototype.canSetAudioStreamIndex = function () { return false; };
+    YouTubeAppPlayer.prototype.setAudioStreamIndex = function () {};
+    YouTubeAppPlayer.prototype.currentTime = function () { return 0; };
+    YouTubeAppPlayer.prototype.duration = function () { return null; };
+    YouTubeAppPlayer.prototype.pause = function () {};
+    YouTubeAppPlayer.prototype.unpause = function () {};
+    YouTubeAppPlayer.prototype.paused = function () { return false; };
+    YouTubeAppPlayer.prototype.volume = function () { return 100; };
+    YouTubeAppPlayer.prototype.setVolume = function () {};
+    YouTubeAppPlayer.prototype.getVolume = function () { return 100; };
+    YouTubeAppPlayer.prototype.setMute = function () {};
+    YouTubeAppPlayer.prototype.isMuted = function () { return false; };
+
+    window.WebOSYouTubeAppPlayer = function () {
+        return YouTubeAppPlayer;
+    };
+
     window.NativeShell = {
         AppHost: {
             init: function () {
@@ -122,7 +206,7 @@
 
         getPlugins: function () {
             postMessage('getPlugins');
-            return [];
+            return ['WebOSYouTubeAppPlayer'];
         },
 
         openUrl: function (url, target) {
