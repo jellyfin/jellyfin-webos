@@ -177,9 +177,9 @@ function Init() {
 
     navigationInit();
 
-    if (storage.exists('connected_servers')) {
-        connected_servers = storage.get('connected_servers')
-        var first_server = connected_servers[Object.keys(connected_servers)[0]]
+    var connected_servers = getConnectedServers();
+    var first_server = connected_servers[Object.keys(connected_servers)[0]];
+    if (first_server) {
         document.querySelector('#baseurl').value = first_server.baseurl;
         document.querySelector('#auto_connect').checked = first_server.auto_connect;
         if (window.performance && window.performance.navigation.type == window.performance.navigation.TYPE_BACK_FORWARD) {
@@ -286,18 +286,18 @@ function getManifest(baseurl) {
 }
 
 function getConnectedServers() {
-    connected_servers = storage.get('connected_servers');
-    if (!connected_servers) {
-        connected_servers = {};
-    }
-    return connected_servers;
+    return storage.get('connected_servers') || {};
+}
+
+function setConnectedServers(servers) {
+    storage.set('connected_servers', servers);
 }
 
 
 function handleSuccessServerInfo(data, baseurl, auto_connect) {
     curr_req = false;
 
-    connected_servers = getConnectedServers();
+    var connected_servers = getConnectedServers();
     for (var server_id in connected_servers) {
         var server = connected_servers[server_id]
         if (server.baseurl == baseurl) {
@@ -307,7 +307,7 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
                 displayError("The server ID has changed since the last connection, please check if you are reaching your own server. To connect anyway, click connect again.");
                 delete connected_servers[server_id]
                 connected_servers[data.Id] = ({ 'baseurl': baseurl, 'auto_connect': false, 'id': false })
-                storage.set('connected_server', connected_servers)
+                setConnectedServers(connected_servers)
                 return false
             }
         }
@@ -316,7 +316,7 @@ function handleSuccessServerInfo(data, baseurl, auto_connect) {
 
     connected_servers = lruStrategy(connected_servers,4, { 'baseurl': baseurl, 'auto_connect': auto_connect, 'id': data.Id, 'Name':data.ServerName })
 
-    storage.set('connected_servers', connected_servers);
+    setConnectedServers(connected_servers);
 
 
     getManifest(baseurl)
@@ -338,13 +338,16 @@ function lruStrategy(old_items,max_items,new_item) {
 }
 
 function handleSuccessManifest(data, baseurl) {
+    var hosturl;
     if(data.start_url.includes("/web")){
-        var hosturl = normalizeUrl(baseurl + "/" + data.start_url);
+        hosturl = normalizeUrl(baseurl + "/" + data.start_url);
     } else {
-        var hosturl = normalizeUrl(baseurl + "/web/" + data.start_url);
+        hosturl = normalizeUrl(baseurl + "/web/" + data.start_url);
     }
 
     curr_req = false;
+
+    var connected_servers = getConnectedServers();
 
     for (var server_id in connected_servers) {
         var info = connected_servers[server_id]
@@ -352,7 +355,7 @@ function handleSuccessManifest(data, baseurl) {
             info['hosturl'] = hosturl
             info['Address'] = info['Address'] || baseurl
 
-            storage.set('connected_servers', connected_servers)
+            setConnectedServers(connected_servers)
             console.log("martin:handleSuccessManifest modified server");
             console.log(info);
 
@@ -368,16 +371,29 @@ function handleSuccessManifest(data, baseurl) {
             return;
         }
     }
-    //no id, unshoft generates unique(?) index
-    connected_servers.unshift({
+
+    // Fallback: if the server wasn't in the list (unexpected), add it keyed by URL.
+    // (We don't have a stable server Id from manifest.json alone.)
+    var fallback_key = 'url:' + baseurl;
+    connected_servers[fallback_key] = ({
         'baseurl': baseurl,
         'hosturl': hosturl,
-        'Name': data.shortname,
-        'Address': new URL(baseurl).hostname.slice(0,8),
-    })
-    storage.set('connected_server', servers)
-    console.log("martin:handleSuccessManifest added server");
-    console.log(info);
+        'auto_connect': false,
+        'id': false,
+        'Name': data.shortname || baseurl,
+        'Address': baseurl
+    });
+    setConnectedServers(connected_servers);
+
+    // Continue with normal flow.
+    getTextToInject(function (bundle) {
+        handoff(hosturl, bundle);
+    }, function (error) {
+        console.error(error);
+        displayError(error);
+        hideConnecting();
+        curr_req = false;
+    });
 }
 
 function handleAbort() {
@@ -402,7 +418,6 @@ function handleFailure(data) {
     }
 
     hideConnecting();
-    storage.remove('connected_server');
     curr_req = false;
 }
 
@@ -549,7 +564,6 @@ window.addEventListener('message', function (msg) {
 /* Server auto-discovery */
 
 var discovered_servers = {};
-var connected_servers = {};
 
 function renderServerList(server_list) {
     for (var server_id in server_list) {
