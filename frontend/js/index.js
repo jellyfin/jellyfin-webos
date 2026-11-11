@@ -524,6 +524,7 @@ function handoff(url, bundle) {
     waitForDeviceInfo(function () {
         contentFrame.style.display = '';
         contentFrame.src = url;
+        contentFrame.focus();
     });
 }
 
