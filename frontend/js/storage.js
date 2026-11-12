@@ -34,7 +34,12 @@ STORAGE.prototype.get = function(name, isJSON) {
 	if (localStorage) {
 		if (localStorage.getItem(name)) {
 			if (isJSON) {
-				return JSON.parse(localStorage.getItem(name));
+				try {
+					return JSON.parse(localStorage.getItem(name));
+				} catch (error) {
+					console.error("Failed to parse stored value for '" + name + "':", error);
+					return undefined;
+				}
 			} else {
 				return localStorage.getItem(name);
 			}
