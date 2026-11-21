@@ -187,7 +187,7 @@ function Init() {
         } else {
             if (first_server.auto_connect) {
                 console.log("Auto connecting...");
-                handleServerSelect();
+                handleServerSelect(true);
             }
         }
         renderServerList(connected_servers);
@@ -219,13 +219,13 @@ function normalizeUrl(url) {
     return parts.join("://");
 }
 
-function handleServerSelect() {
+function handleServerSelect(autoConnecting) {
     var baseurl = normalizeUrl(document.querySelector('#baseurl').value);
     var auto_connect = document.querySelector('#auto_connect').checked;
 
     if (validURL(baseurl)) {
 
-        displayConnecting();
+        displayConnecting(autoConnecting);
         console.log(baseurl, auto_connect);
 
         if (curr_req) {
@@ -236,6 +236,7 @@ function handleServerSelect() {
         getServerInfo(baseurl, auto_connect);
     } else {
         console.log(baseurl);
+        hideConnecting();
         displayError("Please enter a valid URL, it needs a scheme (http:// or https://), a hostname or IP (ex. jellyfin.local or 192.168.0.2) and a port (ex. :8096 or :8920).");
     }
 }
@@ -251,12 +252,24 @@ function hideError() {
     errorElem.innerHTML = '&nbsp;';
 }
 
-function displayConnecting() {
+var connectingTimeout;
+
+// When auto-connecting, only show "Connecting..." if it takes long enough to notice, so a fast connect doesn't flash it.
+function displayConnecting(autoConnecting) {
     document.querySelector('#serverInfoForm').style.display = 'none';
-    document.querySelector('#busy').style.display = '';
-    navigationInit();
+    clearTimeout(connectingTimeout);
+    if (autoConnecting) {
+        connectingTimeout = setTimeout(function () {
+            document.querySelector('#busy').style.display = '';
+            navigationInit();
+        }, 1000);
+    } else {
+        document.querySelector('#busy').style.display = '';
+        navigationInit();
+    }
 }
 function hideConnecting() {
+    clearTimeout(connectingTimeout);
     document.querySelector('#serverInfoForm').style.display = '';
     document.querySelector('#busy').style.display = 'none';
     navigationInit();
@@ -470,6 +483,7 @@ function handoff(url, bundle) {
     //hideConnecting();
 
     stopDiscovery();
+    clearTimeout(connectingTimeout);
     document.querySelector('.container').style.display = 'none';
 
     var contentFrame = document.querySelector('#contentFrame');
