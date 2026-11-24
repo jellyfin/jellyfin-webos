@@ -9,6 +9,9 @@ var curr_req = false;
 var server_info = false;
 var manifest = false;
 
+/** Delay for displaying "Connecting..." when auto-connecting, in milliseconds */
+var AUTO_CONNECTING_DELAY = 1000;
+
 var appInfo = {
     deviceId: null,
     deviceName: 'LG Smart TV',
@@ -187,7 +190,7 @@ function Init() {
         } else {
             if (first_server.auto_connect) {
                 console.log("Auto connecting...");
-                handleServerSelect();
+                handleServerSelect(true);
             }
         }
         renderServerList(connected_servers);
@@ -219,13 +222,13 @@ function normalizeUrl(url) {
     return parts.join("://");
 }
 
-function handleServerSelect() {
+function handleServerSelect(autoConnecting) {
     var baseurl = normalizeUrl(document.querySelector('#baseurl').value);
     var auto_connect = document.querySelector('#auto_connect').checked;
 
     if (validURL(baseurl)) {
 
-        displayConnecting();
+        displayConnecting(autoConnecting);
         console.log(baseurl, auto_connect);
 
         if (curr_req) {
@@ -251,12 +254,19 @@ function hideError() {
     errorElem.innerHTML = '&nbsp;';
 }
 
-function displayConnecting() {
+var connectingTimeout;
+
+// When auto-connecting, only show "Connecting..." if it takes long enough to notice, so a fast connect doesn't flash it.
+function displayConnecting(autoConnecting) {
     document.querySelector('#serverInfoForm').style.display = 'none';
-    document.querySelector('#busy').style.display = '';
-    navigationInit();
+    clearTimeout(connectingTimeout);
+    connectingTimeout = setTimeout(function () {
+        document.querySelector('#busy').style.display = '';
+        navigationInit();
+    }, autoConnecting ? AUTO_CONNECTING_DELAY : 0);
 }
 function hideConnecting() {
+    clearTimeout(connectingTimeout);
     document.querySelector('#serverInfoForm').style.display = '';
     document.querySelector('#busy').style.display = 'none';
     navigationInit();
@@ -470,6 +480,7 @@ function handoff(url, bundle) {
     //hideConnecting();
 
     stopDiscovery();
+    clearTimeout(connectingTimeout);
     document.querySelector('.container').style.display = 'none';
 
     var contentFrame = document.querySelector('#contentFrame');
