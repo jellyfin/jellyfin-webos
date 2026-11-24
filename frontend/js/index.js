@@ -9,6 +9,9 @@ var curr_req = false;
 var server_info = false;
 var manifest = false;
 
+/** Delay for displaying "Connecting..." when auto-connecting, in milliseconds */
+var AUTO_CONNECTING_DELAY = 1000;
+
 var appInfo = {
     deviceId: null,
     deviceName: 'LG Smart TV',
@@ -236,7 +239,6 @@ function handleServerSelect(autoConnecting) {
         getServerInfo(baseurl, auto_connect);
     } else {
         console.log(baseurl);
-        hideConnecting();
         displayError("Please enter a valid URL, it needs a scheme (http:// or https://), a hostname or IP (ex. jellyfin.local or 192.168.0.2) and a port (ex. :8096 or :8920).");
     }
 }
@@ -258,15 +260,10 @@ var connectingTimeout;
 function displayConnecting(autoConnecting) {
     document.querySelector('#serverInfoForm').style.display = 'none';
     clearTimeout(connectingTimeout);
-    if (autoConnecting) {
-        connectingTimeout = setTimeout(function () {
-            document.querySelector('#busy').style.display = '';
-            navigationInit();
-        }, 1000);
-    } else {
+    connectingTimeout = setTimeout(function () {
         document.querySelector('#busy').style.display = '';
         navigationInit();
-    }
+    }, autoConnecting ? AUTO_CONNECTING_DELAY : 0);
 }
 function hideConnecting() {
     clearTimeout(connectingTimeout);
